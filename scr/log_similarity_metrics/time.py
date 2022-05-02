@@ -38,30 +38,30 @@ def absolute_hour_emd(
     distance) to transform one timestamp histogram into the other.
     """
     # Get the first and last dates of the log
-    if emd_type == _EmdType.BOTH:
+    if emd_type == AbsoluteHourEmdType.BOTH:
         interval_start = min(event_log_1[log_1_ids.start_time].min(), event_log_2[log_2_ids.start_time].min())
-    elif emd_type == _EmdType.START:
+    elif emd_type == AbsoluteHourEmdType.START:
         interval_start = min(event_log_1[log_1_ids.start_time].min(), event_log_2[log_2_ids.start_time].min())
     else:
         interval_start = min(event_log_1[log_1_ids.end_time].min(), event_log_2[log_2_ids.end_time].min())
     interval_start = interval_start.floor(freq='H')
     # Discretize each instant to its corresponding "bin"
     discretized_instants_1 = []
-    if emd_type != _EmdType.END:
+    if emd_type != AbsoluteHourEmdType.END:
         discretized_instants_1 += [
             discretize(difference.total_seconds()) for difference in (event_log_1[log_1_ids.start_time] - interval_start)
         ]
-    if emd_type != _EmdType.START:
+    if emd_type != AbsoluteHourEmdType.START:
         discretized_instants_1 += [
             discretize(difference.total_seconds()) for difference in (event_log_1[log_1_ids.end_time] - interval_start)
         ]
     # Discretize each instant to its corresponding "bin"
     discretized_instants_2 = []
-    if emd_type != _EmdType.END:
+    if emd_type != AbsoluteHourEmdType.END:
         discretized_instants_2 += [
             discretize(difference.total_seconds()) for difference in (event_log_2[log_2_ids.start_time] - interval_start)
         ]
-    if emd_type != _EmdType.START:
+    if emd_type != AbsoluteHourEmdType.START:
         discretized_instants_2 += [
             discretize(difference.total_seconds()) for difference in (event_log_2[log_2_ids.end_time] - interval_start)
         ]
