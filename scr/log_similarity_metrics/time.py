@@ -30,6 +30,20 @@ def absolute_hour_emd(
         emd_type: _EmdType = _EmdType.BOTH,
         discretize=discretize_to_hour  # function to discretize a total amount of seconds
 ) -> float:
+    """
+    EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
+    discretized to bins of size given by [discretize] (default by hour).
+
+    :param event_log_1: first event log.
+    :param log_1_ids: mapping for the column IDs of the first event log.
+    :param event_log_2: second event log.
+    :param log_2_ids: mapping for the column IDs for the second event log.
+    :param emd_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
+    :param discretize: function to discretize the total amount of seconds each timestamp represents, default to hour.
+
+    :return: the EMD between the timestamp distribution of the two event logs, measuring the amount of movements (considering their
+    distance) to transform one timestamp histogram into the other.
+    """
     # Get the first and last dates of the log
     if emd_type == _EmdType.BOTH:
         interval_start = min(event_log_1[log_1_ids.start_time].min(), event_log_2[log_2_ids.start_time].min())
@@ -62,13 +76,26 @@ def absolute_hour_emd(
     return wasserstein_distance(discretized_instants_1, discretized_instants_2)
 
 
-def trace_duration_emd(
+def cycle_time_emd(
         event_log_1: pd.DataFrame,
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         bin_size: datetime.timedelta
 ) -> float:
+    """
+    EMD (or Wasserstein Distance) between the distribution of cycle times of two event logs. To get this distribution, the cycle times are
+    discretized to bins of size [bin_size].
+
+    :param event_log_1: first event log.
+    :param log_1_ids: mapping for the column IDs of the first event log.
+    :param event_log_2: second event log.
+    :param log_2_ids: mapping for the column IDs for the second event log.
+    :param bin_size: time interval to define the bin size.
+
+    :return: the EMD between the cycle time distribution of the two event logs, measuring the amount of movements (considering their
+    distance) to transform one cycle time histogram into the other.
+    """
     # Get trace durations of each trace for the first log
     trace_durations_1 = []
     for case, events in event_log_1.groupby([log_1_ids.case]):
