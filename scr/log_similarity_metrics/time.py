@@ -1,17 +1,10 @@
 import datetime
-import enum
 import math
 
 import pandas as pd
 from scipy.stats import wasserstein_distance
 
-from .config import EventLogIDs
-
-
-class _EmdType(enum.Enum):
-    BOTH = 0
-    START = 1
-    END = 2
+from log_similarity_metrics.config import EventLogIDs, AbsoluteHourEmdType
 
 
 def discretize_to_hour(seconds: int):
@@ -27,7 +20,7 @@ def absolute_hour_emd(
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
-        emd_type: _EmdType = _EmdType.BOTH,
+        emd_type: AbsoluteHourEmdType = AbsoluteHourEmdType.BOTH,
         discretize=discretize_to_hour  # function to discretize a total amount of seconds
 ) -> float:
     """
