@@ -33,7 +33,7 @@ def control_flow_log_similarity(
     distances = []
     for i_1, sequence_1 in sequences_1['sequence'].iteritems():
         for i_2, sequence_2 in sequences_2['sequence'].iteritems():
-            distance = damerau_levenshtein_distance(sequence_1, sequence_2)
+            distance = damerau_levenshtein_distance(sequence_1, sequence_2) / max(len(sequence_1), len(sequence_2))
             distances += [{'i_1': i_1, 'i_2': i_2, 'distance': distance}]
     distance_matrix = pd.DataFrame(distances).set_index(['i_1', 'i_2'])
     # Get the optimum pairing
@@ -46,9 +46,7 @@ def control_flow_log_similarity(
     )
     cfls = mean(
         [
-            # Normalize the DL distance by dividing between the size of the longest sequence
-            # Compute Control-Flow Trace Similarity (1 - normalized DL distance)
-            (1 - (cost_matrix[i_1, i_2] / longest_case_size))
+            (1 - cost_matrix[i_1, i_2])  # Compute Control-Flow Trace Similarity (1 - normalized DL distance)
             for i_1, i_2 in zip(row_indexes, col_indexes)
         ]
     )

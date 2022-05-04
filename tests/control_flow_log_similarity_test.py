@@ -49,7 +49,7 @@ def test_control_flow_log_similarity():
     # Get log similarity
     cfls = control_flow_log_similarity(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS)
     # Check result
-    assert cfls == (2.2 / 3)
+    assert cfls == (2.15 / 3)
 
 
 def test__event_logs_to_activity_sequences():

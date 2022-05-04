@@ -41,9 +41,9 @@ from log_similarity_metrics.config import DEFAULT_CSV_IDS
 from log_similarity_metrics.cycle_time_emd import cycle_time_emd
 
 emd = cycle_time_emd(
-   event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-   event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-   datetime.timedelta(hours=1)  # Bins of 1 hour
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    datetime.timedelta(hours=1)  # Bins of 1 hour
 )
 ```
 
@@ -64,10 +64,10 @@ from log_similarity_metrics.absolute_timestamps_emd import absolute_timestamps_e
 
 # Call passing the event logs, its column ID mappings, timestamp type, and discretize function
 emd = absolute_timestamps_emd(
-   event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-   event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-   AbsoluteHourEmdType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
-   discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    AbsoluteHourEmdType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
+    discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
 )
 ```
 
@@ -85,17 +85,17 @@ from log_similarity_metrics.absolute_timestamps_emd import absolute_timestamps_e
 
 # EMD of the (END) timestamps distribution where each bin represents a day
 emd = absolute_timestamps_emd(
-   event_log_1, DEFAULT_CSV_IDS,
-   event_log_2, DEFAULT_CSV_IDS,
-   AbsoluteHourEmdType.END,
-   discretize_to_day
+    event_log_1, DEFAULT_CSV_IDS,
+    event_log_2, DEFAULT_CSV_IDS,
+    AbsoluteHourEmdType.END,
+    discretize_to_day
 )
 
 # EMD of the timestamps distribution where each bin represents a week
 emd = absolute_timestamps_emd(
-   event_log_1, DEFAULT_CSV_IDS,
-   event_log_2, DEFAULT_CSV_IDS,
-   discretize=lambda seconds: math.floor(seconds / 3600 / 24 / 7)
+    event_log_1, DEFAULT_CSV_IDS,
+    event_log_2, DEFAULT_CSV_IDS,
+    discretize=lambda seconds: math.floor(seconds / 3600 / 24 / 7)
 )
 ```
 
@@ -106,12 +106,12 @@ M, Dumas M, González-Rojas O. 2021. Discovering generative models from event lo
 Science 7:e577 https://doi.org/10.7717/peerj-cs.577" for a detailed description of the metric).
 
 1. Transform each process trace of _L1_ and _L2_ to their corresponding activity sequence.
-2. Compute the Damerau-Levenshtein distance between each trace _i_ from _L1_ and each trace _j_ of _L2_.
+2. Compute the Damerau-Levenshtein distance between each trace _i_ from _L1_ and each trace _j_ of _L2_, and normalize it by dividing by the
+   length of the longest trace.
 3. Compute the matching between the traces of both logs (such that each _i_ is matched to a different _j_, and vice versa) minimizing the
    sum of distances with linear programming.
-4. Normalize the optimum distances by dividing them by the length of the longest process trace.
-5. Transform the optimum distance values into similarity values by subtracting them to one (_1 - value_).
-6. Compute the CFLS as the average of the normalized similarity values.
+4. Transform the optimum distance values into similarity values by subtracting them to one (_1 - value_).
+5. Compute the CFLS as the average of the normalized similarity values.
 
 ### Example of use
 
