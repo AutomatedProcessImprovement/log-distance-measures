@@ -16,34 +16,34 @@ def test_control_flow_log_similarity():
     # Define event logs
     event_log_1 = pd.DataFrame(
         data=[
-            {'case_id': "trace-01", 'Activity': "A", 'start_time': 1, 'end_time': 2},
-            {'case_id': "trace-01", 'Activity': "B", 'start_time': 3, 'end_time': 4},
-            {'case_id': "trace-01", 'Activity': "C", 'start_time': 5, 'end_time': 6},
-            {'case_id': "trace-01", 'Activity': "D", 'start_time': 7, 'end_time': 8},
-            {'case_id': "trace-02", 'Activity': "A", 'start_time': 12, 'end_time': 13},
-            {'case_id': "trace-02", 'Activity': "B", 'start_time': 14, 'end_time': 15},
-            {'case_id': "trace-02", 'Activity': "F", 'start_time': 16, 'end_time': 17},
-            {'case_id': "trace-02", 'Activity': "G", 'start_time': 18, 'end_time': 19},
-            {'case_id': "trace-03", 'Activity': "A", 'start_time': 23, 'end_time': 24},
-            {'case_id': "trace-03", 'Activity': "H", 'start_time': 25, 'end_time': 26},
-            {'case_id': "trace-03", 'Activity': "I", 'start_time': 27, 'end_time': 28}
+            {'case_id': "trace-01", 'Activity': "Start", 'start_time': 1, 'end_time': 2},
+            {'case_id': "trace-01", 'Activity': "Continue", 'start_time': 3, 'end_time': 4},
+            {'case_id': "trace-01", 'Activity': "Do something", 'start_time': 5, 'end_time': 6},
+            {'case_id': "trace-01", 'Activity': "Pause", 'start_time': 7, 'end_time': 8},
+            {'case_id': "trace-02", 'Activity': "Start", 'start_time': 12, 'end_time': 13},
+            {'case_id': "trace-02", 'Activity': "Continue", 'start_time': 14, 'end_time': 15},
+            {'case_id': "trace-02", 'Activity': "Think", 'start_time': 16, 'end_time': 17},
+            {'case_id': "trace-02", 'Activity': "End", 'start_time': 18, 'end_time': 19},
+            {'case_id': "trace-03", 'Activity': "Start", 'start_time': 23, 'end_time': 24},
+            {'case_id': "trace-03", 'Activity': "Oops", 'start_time': 25, 'end_time': 26},
+            {'case_id': "trace-03", 'Activity': "New branch", 'start_time': 27, 'end_time': 28}
         ]
     )
     event_log_2 = pd.DataFrame(
         data=[
-            {'case_id': "trace-01", 'Activity': "A", 'start_time': 1, 'end_time': 2},
-            {'case_id': "trace-01", 'Activity': "C", 'start_time': 3, 'end_time': 4},
-            {'case_id': "trace-01", 'Activity': "B", 'start_time': 5, 'end_time': 6},
-            {'case_id': "trace-01", 'Activity': "D", 'start_time': 7, 'end_time': 8},
-            {'case_id': "trace-02", 'Activity': "A", 'start_time': 12, 'end_time': 13},
-            {'case_id': "trace-02", 'Activity': "B", 'start_time': 14, 'end_time': 15},
-            {'case_id': "trace-02", 'Activity': "F", 'start_time': 16, 'end_time': 17},
-            {'case_id': "trace-02", 'Activity': "G", 'start_time': 18, 'end_time': 19},
-            {'case_id': "trace-03", 'Activity': "A", 'start_time': 23, 'end_time': 24},
-            {'case_id': "trace-03", 'Activity': "J", 'start_time': 25, 'end_time': 26},
-            {'case_id': "trace-03", 'Activity': "I", 'start_time': 27, 'end_time': 28},
-            {'case_id': "trace-03", 'Activity': "H", 'start_time': 29, 'end_time': 30},
-            {'case_id': "trace-03", 'Activity': "H", 'start_time': 32, 'end_time': 35}
+            {'case_id': "trace-01", 'Activity': "Start", 'start_time': 1, 'end_time': 2},
+            {'case_id': "trace-01", 'Activity': "Do something", 'start_time': 3, 'end_time': 4},
+            {'case_id': "trace-01", 'Activity': "Continue", 'start_time': 5, 'end_time': 6},
+            {'case_id': "trace-01", 'Activity': "Pause", 'start_time': 7, 'end_time': 8},
+            {'case_id': "trace-02", 'Activity': "Start", 'start_time': 12, 'end_time': 13},
+            {'case_id': "trace-02", 'Activity': "Continue", 'start_time': 14, 'end_time': 15},
+            {'case_id': "trace-02", 'Activity': "Think", 'start_time': 16, 'end_time': 17},
+            {'case_id': "trace-02", 'Activity': "End", 'start_time': 18, 'end_time': 19},
+            {'case_id': "trace-03", 'Activity': "Start", 'start_time': 23, 'end_time': 24},
+            {'case_id': "trace-03", 'Activity': "Extra activity", 'start_time': 25, 'end_time': 26},
+            {'case_id': "trace-03", 'Activity': "New branch", 'start_time': 27, 'end_time': 28},
+            {'case_id': "trace-03", 'Activity': "Oops", 'start_time': 29, 'end_time': 30},
+            {'case_id': "trace-03", 'Activity': "Oops", 'start_time': 32, 'end_time': 35}
         ]
     )
     # Get log similarity
