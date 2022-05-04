@@ -3,7 +3,7 @@ import datetime
 import pandas as pd
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS, AbsoluteHourEmdType
-from log_similarity_metrics.time import absolute_hour_emd, discretize_to_hour, discretize_to_day, cycle_time_emd
+from log_similarity_metrics.time import absolute_timestamps_emd, discretize_to_hour, discretize_to_day, cycle_time_emd
 
 
 def _read_event_log(path: str) -> pd.DataFrame:
@@ -18,25 +18,25 @@ def test_absolute_hour_emd_similar_logs():
     event_log_1 = _read_event_log("./tests/assets/test_event_log_1.csv")
     event_log_2 = _read_event_log("./tests/assets/test_event_log_2.csv")
     # EMD should be 0 as both distributions are exactly the same
-    assert absolute_hour_emd(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.BOTH) == 0.0
-    assert absolute_hour_emd(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.START) == 0.0
-    assert absolute_hour_emd(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.END) == 0.0
-    assert absolute_hour_emd(
+    assert absolute_timestamps_emd(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.BOTH) == 0.0
+    assert absolute_timestamps_emd(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.START) == 0.0
+    assert absolute_timestamps_emd(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.END) == 0.0
+    assert absolute_timestamps_emd(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.BOTH, discretize=discretize_to_hour
     ) == 0.0
-    assert absolute_hour_emd(
+    assert absolute_timestamps_emd(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.START, discretize=discretize_to_hour
     ) == 0.0
-    assert absolute_hour_emd(
+    assert absolute_timestamps_emd(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.END, discretize=discretize_to_hour
     ) == 0.0
-    assert absolute_hour_emd(
+    assert absolute_timestamps_emd(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.BOTH, discretize=discretize_to_day
     ) == 0.0
-    assert absolute_hour_emd(
+    assert absolute_timestamps_emd(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.START, discretize=discretize_to_day
     ) == 0.0
-    assert absolute_hour_emd(
+    assert absolute_timestamps_emd(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteHourEmdType.END, discretize=discretize_to_day
     ) == 0.0
 

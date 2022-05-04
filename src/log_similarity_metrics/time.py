@@ -7,6 +7,10 @@ from scipy.stats import wasserstein_distance
 from log_similarity_metrics.config import EventLogIDs, AbsoluteHourEmdType
 
 
+def discretize_to_minute(seconds: int):
+    return math.floor(seconds / 60)
+
+
 def discretize_to_hour(seconds: int):
     return math.floor(seconds / 3600)
 
@@ -15,13 +19,13 @@ def discretize_to_day(seconds: int):
     return math.floor(seconds / 3600 / 24)
 
 
-def absolute_hour_emd(
+def absolute_timestamps_emd(
         event_log_1: pd.DataFrame,
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         emd_type: AbsoluteHourEmdType = AbsoluteHourEmdType.BOTH,
-        discretize=discretize_to_hour  # function to discretize a total amount of seconds
+        discretize=discretize_to_hour  # function to discretize a total amount of seconds into bins
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
