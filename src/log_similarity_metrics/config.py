@@ -8,19 +8,16 @@ class EventLogIDs:
     activity: str = 'activity'
     start_time: str = 'start_timestamp'
     end_time: str = 'end_timestamp'
-    resource: str = 'resource'
 
 
 DEFAULT_CSV_IDS = EventLogIDs(case='case_id',
                               activity='Activity',
                               start_time='start_time',
-                              end_time='end_time',
-                              resource='Resource')
+                              end_time='end_time')
 DEFAULT_XES_IDS = EventLogIDs(case='case:concept:name',
                               activity='concept:name',
                               start_time='time:start',
-                              end_time='time:timestamp',
-                              resource='org:resource')
+                              end_time='time:timestamp')
 
 
 class AbsoluteHourEmdType(enum.Enum):
