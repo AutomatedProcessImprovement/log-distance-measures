@@ -40,10 +40,6 @@ def control_flow_log_similarity(
     cost_matrix = distance_matrix.unstack().to_numpy()
     row_indexes, col_indexes = linear_sum_assignment(np.array(cost_matrix))
     # Compute the Control-Flow Log Similarity
-    longest_case_size = max(
-        [len(events) for case_id, events in event_log_1.groupby([log_1_ids.case])] +
-        [len(events) for case_id, events in event_log_2.groupby([log_2_ids.case])]
-    )
     cfls = mean(
         [
             (1 - cost_matrix[i_1, i_2])  # Compute Control-Flow Trace Similarity (1 - normalized DL distance)
