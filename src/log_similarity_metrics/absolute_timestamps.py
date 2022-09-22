@@ -92,6 +92,7 @@ def absolute_timestamps_emd(
     :return: the EMD between the timestamp distribution of the two event logs, measuring the amount of movements (considering their
     distance) to transform one timestamp histogram into the other.
     """
+    # Get discretized start and/or end timestamps
     discretized_instants_1, discretized_instants_2 = _discretize(
         event_log_1, log_1_ids, event_log_2, log_2_ids, discretize_type, discretize_instant
     )
@@ -120,8 +121,16 @@ def absolute_timestamps_dtw(
 
     :return: the DTW metric between the timestamp distribution of the two event logs.
     """
+    # Get discretized start and/or end timestamps
     discretized_instants_1, discretized_instants_2 = _discretize(
         event_log_1, log_1_ids, event_log_2, log_2_ids, discretize_type, discretize_instant
     )
+    # Group them to build the histogram
+    min_instant = min(discretized_instants_1 + discretized_instants_2)
+    max_instant = max(discretized_instants_1 + discretized_instants_2)
+    hist_1, hist_2 = [], []
+    for i in range(min_instant, max_instant):
+        hist_1 += [discretized_instants_1.count(i)]
+        hist_2 += [discretized_instants_2.count(i)]
     # Return EMD metric
     return dtw(discretized_instants_1, discretized_instants_2, keep_internals=True).distance
