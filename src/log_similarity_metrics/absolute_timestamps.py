@@ -2,6 +2,7 @@ import math
 from typing import Tuple
 
 import pandas as pd
+from dtw import dtw
 from scipy.stats import wasserstein_distance
 
 from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType
@@ -96,3 +97,31 @@ def absolute_timestamps_emd(
     )
     # Return EMD metric
     return wasserstein_distance(discretized_instants_1, discretized_instants_2)
+
+
+def absolute_timestamps_dtw(
+        event_log_1: pd.DataFrame,
+        log_1_ids: EventLogIDs,
+        event_log_2: pd.DataFrame,
+        log_2_ids: EventLogIDs,
+        discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
+        discretize_instant=discretize_to_hour  # function to discretize a total amount of seconds into bins
+) -> float:
+    """
+    Dynamic Time Warping metric between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
+    discretized to bins of size given by [discretize] (default by hour).
+
+    :param event_log_1: first event log.
+    :param log_1_ids: mapping for the column IDs of the first event log.
+    :param event_log_2: second event log.
+    :param log_2_ids: mapping for the column IDs for the second event log.
+    :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
+    :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
+
+    :return: the DTW metric between the timestamp distribution of the two event logs.
+    """
+    discretized_instants_1, discretized_instants_2 = _discretize(
+        event_log_1, log_1_ids, event_log_2, log_2_ids, discretize_type, discretize_instant
+    )
+    # Return EMD metric
+    return dtw(discretized_instants_1, discretized_instants_2, keep_internals=True).distance
