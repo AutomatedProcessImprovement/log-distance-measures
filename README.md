@@ -38,12 +38,12 @@ Distance measure computing how different the cycle time discretized histograms o
 import datetime
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.cycle_time_emd import cycle_time_emd
+from log_similarity_metrics.cycle_times import cycle_time_emd
 
 emd = cycle_time_emd(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    datetime.timedelta(hours=1)  # Bins of 1 hour
+   event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+   event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+   datetime.timedelta(hours=1)  # Bins of 1 hour
 )
 ```
 
@@ -59,15 +59,15 @@ hour.
 ### Example of use
 
 ```python
-from log_similarity_metrics.config import AbsoluteHourEmdType, DEFAULT_CSV_IDS
-from log_similarity_metrics.absolute_timestamps_emd import absolute_timestamps_emd, discretize_to_hour
+from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS
+from log_similarity_metrics.absolute_timestamps import absolute_timestamps_emd, discretize_to_hour
 
 # Call passing the event logs, its column ID mappings, timestamp type, and discretize function
 emd = absolute_timestamps_emd(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    AbsoluteHourEmdType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
-    discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
+   event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+   event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+   AbsoluteTimestampType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
+   discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
 )
 ```
 
@@ -80,22 +80,22 @@ seconds to its bin.
 ```python
 import math
 
-from log_similarity_metrics.config import AbsoluteHourEmdType, DEFAULT_CSV_IDS
-from log_similarity_metrics.absolute_timestamps_emd import absolute_timestamps_emd, discretize_to_day
+from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS
+from log_similarity_metrics.absolute_timestamps import absolute_timestamps_emd, discretize_to_day
 
 # EMD of the (END) timestamps distribution where each bin represents a day
 emd = absolute_timestamps_emd(
-    event_log_1, DEFAULT_CSV_IDS,
-    event_log_2, DEFAULT_CSV_IDS,
-    AbsoluteHourEmdType.END,
-    discretize_to_day
+   event_log_1, DEFAULT_CSV_IDS,
+   event_log_2, DEFAULT_CSV_IDS,
+   AbsoluteTimestampType.END,
+   discretize_to_day
 )
 
 # EMD of the timestamps distribution where each bin represents a week
 emd = absolute_timestamps_emd(
-    event_log_1, DEFAULT_CSV_IDS,
-    event_log_2, DEFAULT_CSV_IDS,
-    discretize=lambda seconds: math.floor(seconds / 3600 / 24 / 7)
+   event_log_1, DEFAULT_CSV_IDS,
+   event_log_2, DEFAULT_CSV_IDS,
+   discretize=lambda seconds: math.floor(seconds / 3600 / 24 / 7)
 )
 ```
 

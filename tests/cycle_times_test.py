@@ -3,7 +3,7 @@ import datetime
 import pandas as pd
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.cycle_time_emd import cycle_time_emd
+from log_similarity_metrics.cycle_times import cycle_time_emd
 
 
 def _read_event_log(path: str) -> pd.DataFrame:

@@ -20,7 +20,7 @@ DEFAULT_XES_IDS = EventLogIDs(case='case:concept:name',
                               end_time='time:timestamp')
 
 
-class AbsoluteHourEmdType(enum.Enum):
+class AbsoluteTimestampType(enum.Enum):
     BOTH = 0
     START = 1
     END = 2
