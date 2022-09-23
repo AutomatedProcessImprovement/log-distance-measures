@@ -30,7 +30,8 @@ def _discretize(
 ) -> Tuple[list, list]:
     """
         Discretize the absolute timestamps (start, end, or both, depending on [discretize_type]) of the events in logs [event_log_1] and
-        [event_log_2] using the function [discretize_instant] (to absolute hours by default).
+        [event_log_2] using the function [discretize_instant] (to absolute hours by default). When discretizing the timestamps, the first
+        hour is always 0.
 
         :param event_log_1: first event log.
         :param log_1_ids: mapping for the column IDs of the first event log.
@@ -126,11 +127,12 @@ def absolute_timestamps_dtw(
         event_log_1, log_1_ids, event_log_2, log_2_ids, discretize_type, discretize_instant
     )
     # Group them to build the histogram
-    min_instant = min(discretized_instants_1 + discretized_instants_2)
-    max_instant = max(discretized_instants_1 + discretized_instants_2)
-    hist_1, hist_2 = [], []
-    for i in range(min_instant, max_instant):
-        hist_1 += [discretized_instants_1.count(i)]
-        hist_2 += [discretized_instants_2.count(i)]
+    max_instant = max(max(discretized_instants_1), max(discretized_instants_2))
+    hist_1 = [0] * (max_instant + 1)
+    for i in discretized_instants_1:
+        hist_1[i] += 1
+    hist_2 = [0] * (max_instant + 1)
+    for i in discretized_instants_2:
+        hist_2[i] += 1
     # Return EMD metric
     return dtw(discretized_instants_1, discretized_instants_2, keep_internals=True).distance
