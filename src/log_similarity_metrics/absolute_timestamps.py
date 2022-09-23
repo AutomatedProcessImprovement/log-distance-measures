@@ -134,5 +134,8 @@ def absolute_timestamps_dtw(
     hist_2 = [0] * (max_instant + 1)
     for i in discretized_instants_2:
         hist_2[i] += 1
+    # Add one 0 in the start and end of each histogram, to avoid penalization in case of late start/end in one of the cases
+    hist_1 = [0] + hist_1 + [0]
+    hist_2 = [0] + hist_2 + [0]
     # Return EMD metric
-    return dtw(discretized_instants_1, discretized_instants_2, keep_internals=True).distance
+    return dtw(hist_1, hist_2, keep_internals=True).distance
