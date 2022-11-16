@@ -34,16 +34,15 @@ Distance measure computing how different the cycle time discretized histograms o
 ### Example of use
 
 ```python
-# Call passing the event logs, its column ID mappings, timestamp type, and discretize function
 import datetime
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
 from log_similarity_metrics.cycle_times import cycle_time_emd
 
 emd = cycle_time_emd(
-   event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-   event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-   datetime.timedelta(hours=1)  # Bins of 1 hour
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    datetime.timedelta(hours=1)  # Bins of 1 hour
 )
 ```
 
@@ -53,7 +52,8 @@ Distance measure computing how different the histograms of the timestamps of two
 hour.
 
 1. Take all the start timestamps, the end timestamps, or both.
-2. Group the timestamps by absolute hour (those timestamps between '02/05/2022 10:00:00' and '02/05/2022 10:59:59' goes to the same bin).
+2. Discretize the timestamps by absolute hour (those timestamps between '02/05/2022 10:00:00' and '02/05/2022 10:59:59' goes to the same
+   bin).
 3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
 ### Example of use
@@ -64,10 +64,10 @@ from log_similarity_metrics.absolute_timestamps import absolute_timestamps_emd, 
 
 # Call passing the event logs, its column ID mappings, timestamp type, and discretize function
 emd = absolute_timestamps_emd(
-   event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-   event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-   AbsoluteTimestampType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
-   discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    AbsoluteTimestampType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
+    discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
 )
 ```
 
@@ -85,17 +85,44 @@ from log_similarity_metrics.absolute_timestamps import absolute_timestamps_emd, 
 
 # EMD of the (END) timestamps distribution where each bin represents a day
 emd = absolute_timestamps_emd(
-   event_log_1, DEFAULT_CSV_IDS,
-   event_log_2, DEFAULT_CSV_IDS,
-   AbsoluteTimestampType.END,
-   discretize_to_day
+    event_log_1, DEFAULT_CSV_IDS,
+    event_log_2, DEFAULT_CSV_IDS,
+    AbsoluteTimestampType.END,
+    discretize_to_day
 )
 
 # EMD of the timestamps distribution where each bin represents a week
 emd = absolute_timestamps_emd(
-   event_log_1, DEFAULT_CSV_IDS,
-   event_log_2, DEFAULT_CSV_IDS,
-   discretize=lambda seconds: math.floor(seconds / 3600 / 24 / 7)
+    event_log_1, DEFAULT_CSV_IDS,
+    event_log_2, DEFAULT_CSV_IDS,
+    discretize=lambda seconds: math.floor(seconds / 3600 / 24 / 7)
+)
+```
+
+## Circadian Timestamps EMD
+
+Distance measure computing how different the histograms of the timestamps of two event logs are, comparing all the instants recorded in the
+same weekday together, and discretizing them to the hour in the day.
+
+1. Take all the start timestamps, the end timestamps, or both.
+2. Group the timestamps by their weekday (e.g. all the timestamps recorded on Monday of one log are going to be compared with the timestamps
+   recorded on Monday of the other event log).
+3. Discretize the timestamps to their hour (those timestamps between '10:00:00' and '10:59:59' goes to the same bin).
+4. Compare the histograms of the two event logs for each weekday (with the Wasserstein Distance, a.k.a. EMD), and compute the average.
+
+_Extra 1_: If there are no recorded timestamps for one of the weekdays in both logs, no distance is measured for that day.
+_Extra 2_: If there are no recorded timestamps for one of the weekdays in one of the logs, the distance for that day is set to 23 (the
+maximum distance for two histograms with values from 0 to 23)
+
+### Example of use
+
+```python
+from log_similarity_metrics.config import DEFAULT_CSV_IDS
+
+emd = circadian_timestamps_emd(
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    AbsoluteTimestampType.BOTH  # Consider both start/end timestamps of each activity instance
 )
 ```
 
