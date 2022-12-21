@@ -49,3 +49,13 @@ def test_cycle_time_emd_similar_logs():
     assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2) == 0.0
     assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3) == 0.0
     assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4) == 0.0
+
+
+def test_cycle_time_emd_different_logs():
+    # Read event logs with similar timestamp distribution but different resources, activity names and trace IDs
+    event_log_1 = _read_event_log("./tests/assets/test_event_log_1.csv")
+    event_log_2 = _read_event_log("./tests/assets/test_event_log_3.csv")
+    # EMD should be 0 as both distributions are exactly the same
+    assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2) == 12
+    assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3) == 16
+    assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4) == 20
