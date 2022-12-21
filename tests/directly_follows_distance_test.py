@@ -1,7 +1,7 @@
 import pandas as pd
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.directly_follows_distance import _compute_n_grams
+from log_similarity_metrics.directly_follows_distance import _compute_n_grams, directly_follows_distance
 
 
 def _read_event_log(path: str) -> pd.DataFrame:
@@ -39,3 +39,13 @@ def test__compute_n_grams():
         '4,3,5,6': 1, '4,3,5,9': 1, '4,5,6,7': 1, '4,5,9,7': 1,
         '5,6,7,8': 2, '5,9,7,8': 2
     }
+
+
+def test_cycle_time_emd_similar_logs():
+    # Read event logs with similar timestamp distribution but different resources, activity names and trace IDs
+    event_log_1 = _read_event_log("./tests/assets/test_event_log_1.csv")
+    event_log_2 = _read_event_log("./tests/assets/test_event_log_2.csv")
+    # EMD should be 0 as both distributions are exactly the same
+    assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2) == 0.0
+    assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3) == 0.0
+    assert directly_follows_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4) == 0.0

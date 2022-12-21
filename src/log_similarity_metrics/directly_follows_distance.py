@@ -1,5 +1,4 @@
 import pandas as pd
-from scipy.stats import wasserstein_distance
 
 from log_similarity_metrics.config import EventLogIDs
 
@@ -34,8 +33,8 @@ def directly_follows_distance(
         frequencies_2 += [
             n_histogram_2[key] if key in n_histogram_2 else 0
         ]
-    # Return EMD metric TODO not penalize for distance
-    return wasserstein_distance(frequencies_1, frequencies_2)
+    # Return EMD metric
+    return sum([abs(x - y) for (x, y) in zip(frequencies_1, frequencies_2)])
 
 
 def _compute_n_grams(event_log: pd.DataFrame, log_ids: EventLogIDs, n: int = 3) -> dict:
