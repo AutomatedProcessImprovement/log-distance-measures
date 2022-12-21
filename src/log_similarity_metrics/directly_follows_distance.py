@@ -60,9 +60,6 @@ def _compute_n_grams(event_log: pd.DataFrame, log_ids: EventLogIDs, n: int = 3) 
         # Go over the IDs in a n-sized window
         for i in range(len(events) - n + 1):
             n_gram = ",".join([str(event) for event in events[i: i + n]])
-            if n_gram in n_grams:
-                n_grams[n_gram] += 1
-            else:
-                n_grams[n_gram] = 0
+            n_grams[n_gram] = n_grams[n_gram] + 1 if n_gram in n_grams else 1
     # Return n_grams and their frequency
     return n_grams
