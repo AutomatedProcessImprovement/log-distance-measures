@@ -48,7 +48,21 @@ def _compute_n_grams(event_log: pd.DataFrame, log_ids: EventLogIDs, n: int = 3) 
 
     :return: a dict with the n-grams as key, and their absolute frequency as value.
     """
+    # Map each activity to a number
+    activity_to_int = [None] + list(event_log[log_ids.activity].unique())
     # Compute n-grams
     n_grams = {}
+    for case_id, events in event_log.groupby(log_ids.case):
+        # List with the IDs of each activity
+        events = [0] * (n - 1) + [
+            activity_to_int.index(event) for event in events.sort_values([log_ids.end_time, log_ids.start_time])[log_ids.activity]
+        ] + [0] * (n - 1)
+        # Go over the IDs in a n-sized window
+        for i in range(len(events) - n + 1):
+            n_gram = ",".join([str(event) for event in events[i: i + n]])
+            if n_gram in n_grams:
+                n_grams[n_gram] += 1
+            else:
+                n_grams[n_gram] = 0
     # Return n_grams and their frequency
     return n_grams
