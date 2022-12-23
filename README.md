@@ -152,3 +152,27 @@ emd = control_flow_log_similarity(
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
 )
 ```
+
+## Directly-follows Distance
+
+Distance measure between two event logs computing the difference between their discrete histograms where each bin represents the frequency
+of apparition of an n-gram in the event log. For example, for `n = 3`, the frequency of each trigram (e.g. `A - B - C`) observed in each
+event log is computed, and the absolute sum of frequencies differences is computed as the distance.
+
+1. Given a size `n`, compute the frequency of all sequences of `n` activities observed in each event log (adding artificial activities to
+   the start and end of each trace to consider these as well, e.g., `0 - 0 - A` for a trace starting with `A` and an `n = 3`).
+2. Compute the sum of absolute differences for the frequencies of all computed n-grams (e.g. the frequency of `A - B - C` in the first event
+   log w.r.t. the second event log`).
+
+### Example of use
+
+```python
+from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_similarity_metrics.directly_follows_distance import directly_follows_distance
+
+# Call passing the event logs, and its column ID mappings
+emd = directly_follows_distance(
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+)
+```
