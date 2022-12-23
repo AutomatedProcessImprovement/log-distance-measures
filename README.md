@@ -155,14 +155,14 @@ emd = control_flow_log_similarity(
 
 ## Directly-follows Distance
 
-Distance measure between two event logs computing the difference between their discrete histograms where each bin represents the frequency
-of apparition of an n-gram in the event log. For example, for `n = 3`, the frequency of each trigram (e.g. `A - B - C`) observed in each
-event log is computed, and the absolute sum of frequencies differences is computed as the distance.
+Distance measure between two event logs computing the difference in the frequencies of the n-grams observed in the event logs (
+being the n-grams of an event log all the sequences of `n` elements observed in it).
 
-1. Given a size `n`, compute the frequency of all sequences of `n` activities observed in each event log (adding artificial activities to
-   the start and end of each trace to consider these as well, e.g., `0 - 0 - A` for a trace starting with `A` and an `n = 3`).
-2. Compute the sum of absolute differences for the frequencies of all computed n-grams (e.g. the frequency of `A - B - C` in the first event
-   log w.r.t. the second event log`).
+1. Given a size `n`, get all sequences of `n` activities (n-gram) observed in each event log (adding artificial activities to the start and
+   end of each trace to consider these as well, e.g., `0 - 0 - A` for a trace starting with `A` and an `n = 3`).
+2. Compute the number of times that each n-gram is observed in each event log (its frequency).
+3. Compute the sum of absolute differences between the frequencies of all computed n-grams (e.g. the frequency of `A - B - C` in the first
+   event log w.r.t. its frequency in the second event log`).
 
 ### Example of use
 
