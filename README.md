@@ -1,6 +1,6 @@
 # Event Log Distance and Similarity Metrics
 
-Python package with event log distance and similarity metrics.
+Python package with event log distance/similarity metrics.
 
 ### Example of input initialization
 
@@ -123,6 +123,30 @@ emd = circadian_timestamps_emd(
     event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     AbsoluteTimestampType.BOTH  # Consider both start/end timestamps of each activity instance
+)
+```
+
+## Inter-arrival time EMD
+
+Distance measure computing how different the discretized histograms of the inter-arrival times of two event logs are.
+
+1. Compute the arrival timestamp for each process instance (its first start time).
+2. Compute the inter-arrival times (i.e., the interval of time from each arrival time and the next one).
+3. Group the inter-arrival times in bins by a given bin size (time gap).
+4. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+
+### Example of use
+
+```python
+import datetime
+
+from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_similarity_metrics.inter_arrival_times import inter_arrival_time_emd
+
+emd = inter_arrival_time_emd(
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    datetime.timedelta(hours=1)  # Bins of 1 hour
 )
 ```
 
