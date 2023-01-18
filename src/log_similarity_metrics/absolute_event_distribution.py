@@ -3,7 +3,7 @@ from typing import Tuple
 
 import pandas as pd
 from dtw import dtw
-from scipy.stats import wasserstein_distance
+from scipy.stats import wasserstein_distance, kstest
 
 from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType
 
@@ -71,7 +71,7 @@ def _discretize(
     return discretized_instants_1, discretized_instants_2
 
 
-def absolute_timestamps_emd(
+def absolute_event_distribution_distance(
         event_log_1: pd.DataFrame,
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
@@ -101,7 +101,36 @@ def absolute_timestamps_emd(
     return wasserstein_distance(discretized_instants_1, discretized_instants_2)
 
 
-def absolute_timestamps_dtw(
+def absolute_event_distribution_ks(
+        event_log_1: pd.DataFrame,
+        log_1_ids: EventLogIDs,
+        event_log_2: pd.DataFrame,
+        log_2_ids: EventLogIDs,
+        discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
+        discretize_instant=discretize_to_hour  # function to discretize a total amount of seconds into bins
+) -> float:
+    """
+    Kolmogorov-Smirnov test between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
+    discretized to bins of size given by [discretize] (default by hour).
+
+    :param event_log_1: first event log.
+    :param log_1_ids: mapping for the column IDs of the first event log.
+    :param event_log_2: second event log.
+    :param log_2_ids: mapping for the column IDs for the second event log.
+    :param discretize_type: type of KS test (only take into account start timestamps, only end timestamps, or both).
+    :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
+
+    :return: the Kolmogorov-Smirnov test statistic between the timestamp distribution of the two event logs.
+    """
+    # Get discretized start and/or end timestamps
+    discretized_instants_1, discretized_instants_2 = _discretize(
+        event_log_1, log_1_ids, event_log_2, log_2_ids, discretize_type, discretize_instant
+    )
+    # Return KS statistic
+    return kstest(discretized_instants_1, discretized_instants_2)[0]  # Return the statistic of the Kolmogorov-Smirnov
+
+
+def absolute_event_distribution_dtw(
         event_log_1: pd.DataFrame,
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
