@@ -1,8 +1,8 @@
 import pandas as pd
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.control_flow_log_similarity import _event_log_to_activity_sequence, _event_logs_to_activity_sequences, \
-    control_flow_log_similarity
+from log_similarity_metrics.control_flow_log_distance import _event_log_to_activity_sequence, _event_logs_to_activity_sequences, \
+    control_flow_log_distance
 
 
 def _read_event_log(path: str) -> pd.DataFrame:
@@ -12,7 +12,7 @@ def _read_event_log(path: str) -> pd.DataFrame:
     return event_log
 
 
-def test_control_flow_log_similarity():
+def test_control_flow_log_distance():
     # Define event logs
     event_log_1 = pd.DataFrame(
         data=[
@@ -46,10 +46,10 @@ def test_control_flow_log_similarity():
             {'case_id': "trace-03", 'Activity': "Oops", 'start_time': 32, 'end_time': 35}
         ]
     )
-    # Get log similarity
-    cfls = control_flow_log_similarity(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS)
+    # Get log distance
+    cfld = control_flow_log_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS)
     # Check result
-    assert cfls == (2.15 / 3)
+    assert cfld == (0.85 / 3)
 
 
 def test__event_logs_to_activity_sequences():

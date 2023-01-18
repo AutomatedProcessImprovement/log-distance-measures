@@ -9,23 +9,23 @@ from scipy.optimize import linear_sum_assignment
 from log_similarity_metrics.config import EventLogIDs
 
 
-def control_flow_log_similarity(
+def control_flow_log_distance(
         event_log_1: pd.DataFrame,
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs
 ) -> float:
     """
-    Compute the Control-Flow Log Similarity (see "Camargo M, Dumas M, González-Rojas O. 2021. Discovering generative models
+    Compute the Control-Flow Log Distance (see "Camargo M, Dumas M, González-Rojas O. 2021. Discovering generative models
     from event logs: data-driven simulation vs deep learning. PeerJ Computer Science 7:e577 https://doi.org/10.7717/peerj-cs.577"
-    for a detailed description of the metric).
+    for a detailed description of a similarity version of the metric).
 
     :param event_log_1: first event log.
     :param log_1_ids: mapping for the column IDs of the first event log.
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
 
-    :return: the Control-Flow Log Similarity measure between [event_log_1] and [event_log_2].
+    :return: the Control-Flow Log Distance measure between [event_log_1] and [event_log_2].
     """
     # Transform the event log to a list of character sequences representing the traces
     sequences_1, sequences_2 = _event_logs_to_activity_sequences(event_log_1, log_1_ids, event_log_2, log_2_ids)
@@ -39,15 +39,10 @@ def control_flow_log_similarity(
     # Get the optimum pairing
     cost_matrix = distance_matrix.unstack().to_numpy()
     row_indexes, col_indexes = linear_sum_assignment(np.array(cost_matrix))
-    # Compute the Control-Flow Log Similarity
-    cfls = mean(
-        [
-            (1 - cost_matrix[i_1, i_2])  # Compute Control-Flow Trace Similarity (1 - normalized DL distance)
-            for i_1, i_2 in zip(row_indexes, col_indexes)
-        ]
-    )
+    # Compute the Control-Flow Log Distance
+    cfld = mean([cost_matrix[i_1, i_2] for i_1, i_2 in zip(row_indexes, col_indexes)])
     # Return the mean of the distances between the traces
-    return cfls
+    return cfld
 
 
 def _event_logs_to_activity_sequences(

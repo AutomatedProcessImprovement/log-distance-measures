@@ -1,8 +1,19 @@
-# Event Log Distance and Similarity Metrics
+# Event Log Distance Metrics
 
-Python package with event log distance/similarity metrics.
+Python package with the implementation of different metrics to measure the distance between two event logs, from the control-flow
+perspective, temporal perspective, or both:
 
-### Example of input initialization
+- Control-flow
+    - N-Gram Distribution Distance
+    - Control-Flow Log Distance (CFLD)
+- Temporal
+    - Absolute Event Distribution Distance
+    - Case Arrival Distribution Distance
+    - Circadian Event Distribution Distance
+    - Relative Event Distribution Distance
+    - Cycle Time Distribution Distance
+
+#### Example of input initialization
 
 ```python
 import pandas as pd
@@ -10,12 +21,11 @@ import pandas as pd
 from log_similarity_metrics.config import EventLogIDs
 
 # Set event log column ID mapping
-event_log_ids = EventLogIDs(  # This values are stored in DEFAULT_CSV_IDS
+event_log_ids = EventLogIDs(  # These values are stored in DEFAULT_CSV_IDS
     case="case_id",
     activity="Activity",
     start_time="start_time",
-    end_time="end_time",
-    resource="Resource"
+    end_time="end_time"
 )
 # Read and transform time attributes
 event_log = pd.read_csv("/path/to/event_log.csv")
@@ -23,36 +33,69 @@ event_log[event_log_ids.start_time] = pd.to_datetime(event_log[event_log_ids.sta
 event_log[event_log_ids.end_time] = pd.to_datetime(event_log[event_log_ids.end_time], utc=True)
 ```
 
-## Cycle Time EMD
+&nbsp;
 
-Distance measure computing how different the cycle time discretized histograms of two event logs are.
+## Control-flow Log Distance (CFLD)
 
-1. Compute the cycle time of each process instance.
-2. Group the cycle times in bins by a given bin size (time gap).
-3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+Distance measure between two event logs with the same number of traces (_L1_ and _L2_) comparing the control-flow dimension (see "Camargo
+M, Dumas M, González-Rojas O. 2021. Discovering generative models from event logs: data-driven simulation vs deep learning. PeerJ Computer
+Science 7:e577 https://doi.org/10.7717/peerj-cs.577" for a detailed description of a similarity version of this metric).
+
+1. Transform each process trace of _L1_ and _L2_ to their corresponding activity sequence.
+2. Compute the Damerau-Levenshtein distance between each trace _i_ from _L1_ and each trace _j_ of _L2_, and normalize it by dividing by the
+   length of the longest trace.
+3. Compute the matching between the traces of both logs (such that each _i_ is matched to a different _j_, and vice versa) minimizing the
+   sum of distances with linear programming.
+4. Compute the CFLD as the average of the normalized distance values.
 
 ### Example of use
 
 ```python
-import datetime
-
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.cycle_times import cycle_time_emd
+from log_similarity_metrics.control_flow_log_distance import control_flow_log_distance
 
-emd = cycle_time_emd(
+# Call passing the event logs, and its column ID mappings
+emd = control_flow_log_distance(
     event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    datetime.timedelta(hours=1)  # Bins of 1 hour
 )
 ```
 
-## Absolute Hour Timestamp EMD
+&nbsp;
+
+## N-Gram Distribution Distance
+
+Distance measure between two event logs computing the difference in the frequencies of the n-grams observed in the event logs (
+being the n-grams of an event log all the groups of `n` consecutive elements observed in it).
+
+1. Given a size `n`, get all sequences of `n` activities (n-gram) observed in each event log (adding artificial activities to the start and
+   end of each trace to consider these as well, e.g., `0 - 0 - A` for a trace starting with `A` and an `n = 3`).
+2. Compute the number of times that each n-gram is observed in each event log (its frequency).
+3. Compute the sum of absolute differences between the frequencies of all computed n-grams (e.g. the frequency of `A - B - C` in the first
+   event log w.r.t. its frequency in the second event log).
+
+### Example of use
+
+```python
+from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_similarity_metrics.directly_follows_distance import directly_follows_distance
+
+# Call passing the event logs, and its column ID mappings
+emd = directly_follows_distance(
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+)
+```
+
+&nbsp;
+
+## Absolute Event Distribution Distance
 
 Distance measure computing how different the histograms of the timestamps of two event logs are, discretizing the timestamps by absolute
 hour.
 
 1. Take all the start timestamps, the end timestamps, or both.
-2. Discretize the timestamps by absolute hour (those timestamps between '02/05/2022 10:00:00' and '02/05/2022 10:59:59' goes to the same
+2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` goes to the same
    bin).
 3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
@@ -71,8 +114,8 @@ emd = absolute_timestamps_emd(
 )
 ```
 
-The timestamp EMD metric can be also used to compare the distribution of the start timestamps (with AbsoluteHourEmdType.START), or the end
-timestamps (AbsoluteHourEmdType.END), instead of both of them.
+The timestamp EMD metric can be also used to compare the distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end
+timestamps (with `AbsoluteHourEmdType.END`), instead of both of them.
 
 Furthermore, the binning is performed to hour by default, but it can be customized passing another function discretize the total amount of
 seconds to its bin.
@@ -99,7 +142,35 @@ emd = absolute_timestamps_emd(
 )
 ```
 
-## Circadian Timestamps EMD
+&nbsp;
+
+## Case Arrival Distribution Distance
+
+Distance measure computing how different the discretized histograms of the inter-arrival times of two event logs are.
+
+1. Compute the arrival timestamp for each process instance (its first start time).
+2. Compute the inter-arrival times (i.e., the interval of time from each arrival time and the next one).
+3. Group the inter-arrival times in bins by a given bin size (time gap).
+4. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+
+### Example of use
+
+```python
+import datetime
+
+from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_similarity_metrics.inter_arrival_times import inter_arrival_time_emd
+
+emd = inter_arrival_time_emd(
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    datetime.timedelta(hours=1)  # Bins of 1 hour
+)
+```
+
+&nbsp;
+
+## Circadian Event Distribution Distance
 
 Distance measure computing how different the histograms of the timestamps of two event logs are, comparing all the instants recorded in the
 same weekday together, and discretizing them to the hour in the day.
@@ -126,14 +197,19 @@ emd = circadian_timestamps_emd(
 )
 ```
 
-## Inter-arrival time EMD
+Similarly than with the Absolute Event Distribution Distance, the Circadian Event Distribution Distance can be also used to compare the
+distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end timestamps (with `AbsoluteHourEmdType.END`), instead of
+both of them.
 
-Distance measure computing how different the discretized histograms of the inter-arrival times of two event logs are.
+&nbsp;
 
-1. Compute the arrival timestamp for each process instance (its first start time).
-2. Compute the inter-arrival times (i.e., the interval of time from each arrival time and the next one).
-3. Group the inter-arrival times in bins by a given bin size (time gap).
-4. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+## Cycle Time Distribution Distance
+
+Distance measure computing how different the cycle time discretized histograms of two event logs are.
+
+1. Compute the cycle time of each process instance.
+2. Group the cycle times in bins by a given bin size (time gap).
+3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
 ### Example of use
 
@@ -141,62 +217,11 @@ Distance measure computing how different the discretized histograms of the inter
 import datetime
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.inter_arrival_times import inter_arrival_time_emd
+from log_similarity_metrics.cycle_times import cycle_time_emd
 
-emd = inter_arrival_time_emd(
+emd = cycle_time_emd(
     event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     datetime.timedelta(hours=1)  # Bins of 1 hour
-)
-```
-
-## Control-flow Log Similarity (CFLS)
-
-Similarity measure between two event logs with the same number of traces (_L1_ and _L2_) comparing the control-flow dimension (see "Camargo
-M, Dumas M, González-Rojas O. 2021. Discovering generative models from event logs: data-driven simulation vs deep learning. PeerJ Computer
-Science 7:e577 https://doi.org/10.7717/peerj-cs.577" for a detailed description of the metric).
-
-1. Transform each process trace of _L1_ and _L2_ to their corresponding activity sequence.
-2. Compute the Damerau-Levenshtein distance between each trace _i_ from _L1_ and each trace _j_ of _L2_, and normalize it by dividing by the
-   length of the longest trace.
-3. Compute the matching between the traces of both logs (such that each _i_ is matched to a different _j_, and vice versa) minimizing the
-   sum of distances with linear programming.
-4. Transform the optimum distance values into similarity values by subtracting them to one (_1 - value_).
-5. Compute the CFLS as the average of the normalized similarity values.
-
-### Example of use
-
-```python
-from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.control_flow_log_similarity import control_flow_log_similarity
-
-# Call passing the event logs, and its column ID mappings
-emd = control_flow_log_similarity(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-)
-```
-
-## Directly-follows Distance
-
-Distance measure between two event logs computing the difference in the frequencies of the n-grams observed in the event logs (
-being the n-grams of an event log all the sequences of `n` elements observed in it).
-
-1. Given a size `n`, get all sequences of `n` activities (n-gram) observed in each event log (adding artificial activities to the start and
-   end of each trace to consider these as well, e.g., `0 - 0 - A` for a trace starting with `A` and an `n = 3`).
-2. Compute the number of times that each n-gram is observed in each event log (its frequency).
-3. Compute the sum of absolute differences between the frequencies of all computed n-grams (e.g. the frequency of `A - B - C` in the first
-   event log w.r.t. its frequency in the second event log`).
-
-### Example of use
-
-```python
-from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.directly_follows_distance import directly_follows_distance
-
-# Call passing the event logs, and its column ID mappings
-emd = directly_follows_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
 )
 ```
