@@ -81,7 +81,7 @@ def absolute_event_distribution_distance(
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
-    discretized to bins of size given by [discretize] (default by hour).
+    discretized to bins of size given by [discretize_instant] (default by hour).
 
     :param event_log_1: first event log.
     :param log_1_ids: mapping for the column IDs of the first event log.
@@ -111,7 +111,7 @@ def absolute_event_distribution_ks(
 ) -> float:
     """
     Kolmogorov-Smirnov test between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
-    discretized to bins of size given by [discretize] (default by hour).
+    discretized to bins of size given by [discretize_instant] (default by hour).
 
     :param event_log_1: first event log.
     :param log_1_ids: mapping for the column IDs of the first event log.
@@ -140,7 +140,7 @@ def absolute_event_distribution_dtw(
 ) -> float:
     """
     Dynamic Time Warping metric between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
-    discretized to bins of size given by [discretize] (default by hour).
+    discretized to bins of size given by [discretize_instant] (default by hour).
 
     :param event_log_1: first event log.
     :param log_1_ids: mapping for the column IDs of the first event log.
