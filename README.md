@@ -78,12 +78,13 @@ being the n-grams of an event log all the groups of `n` consecutive elements obs
 
 ```python
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.n_gram_distribution_distance import n_gram_distribution_distance
+from log_similarity_metrics.n_gram_distribution import n_gram_distribution_distance
 
 # Call passing the event logs, and its column ID mappings
 emd = n_gram_distribution_distance(
     event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    n=3  # trigrams
 )
 ```
 

@@ -1,7 +1,7 @@
 import pandas as pd
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.n_gram_distribution_distance import _compute_n_grams, n_gram_distribution_distance
+from log_similarity_metrics.n_gram_distribution import _compute_n_grams, n_gram_distribution_distance
 
 
 def _read_event_log(path: str) -> pd.DataFrame:
