@@ -147,25 +147,24 @@ distance = absolute_event_distribution_distance(
 
 ## Case Arrival Distribution Distance
 
-Distance measure computing how different the discretized histograms of the inter-arrival times of two event logs are.
+Distance measure computing how different the discretized histograms of the arrival events of two event logs are.
 
-1. Compute the arrival timestamp for each process instance (its first start time).
-2. Compute the inter-arrival times (i.e., the interval of time from each arrival time and the next one).
-3. Group the inter-arrival times in bins by a given bin size (time gap).
-4. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+1. Compute the arrival timestamp for each process case (its first start time).
+2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` goes to the same
+   bin).
+3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
 ### Example of use
 
 ```python
-import datetime
-
+from log_similarity_metrics.absolute_event_distribution import discretize_to_hour
+from log_similarity_metrics.case_arrival_distribution import case_arrival_distribution_distance
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.inter_arrival_times import inter_arrival_time_emd
 
-distance = inter_arrival_time_emd(
+distance = case_arrival_distribution_distance(
     event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    bin_size=datetime.timedelta(hours=1)  # Bins of 1 hour
+    discretize_instant=discretize_to_hour  # Function to discretize each timestamp (default by hour)
 )
 ```
 
