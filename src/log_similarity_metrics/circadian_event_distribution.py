@@ -1,3 +1,5 @@
+from statistics import mean
+
 import numpy as np
 import pandas as pd
 from scipy.stats import wasserstein_distance
@@ -5,39 +7,7 @@ from scipy.stats import wasserstein_distance
 from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType
 
 
-def _discretize(
-        event_log: pd.DataFrame,
-        log_ids: EventLogIDs,
-        discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH
-) -> pd.DataFrame:
-    """
-        Create a pd.Dataframe with the hour (0-23) of the timestamps (start, end, or both, depending on [discretize_type]) of the events
-        in log [event_log] in one column ('hour'), and the day of the week in another column ('weekday').
-
-        :param event_log: event log to extract the instants of.
-        :param log_ids: mapping for the column IDs of the event log.
-        :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
-
-        :return: A pd.Dataframe with the hour of each discretized instant in the one column, and the weekday in other.
-        """
-    # Get the instants to discretize
-    if discretize_type == AbsoluteTimestampType.BOTH:
-        to_discretize = pd.concat(
-            [event_log[log_ids.start_time], event_log[log_ids.end_time]]
-        ).reset_index(drop=True).to_frame(name='instant')
-    elif discretize_type == AbsoluteTimestampType.START:
-        to_discretize = event_log[log_ids.start_time].to_frame(name='instant')
-    else:
-        to_discretize = event_log[log_ids.end_time].to_frame(name='instant')
-    # Compute their weekday
-    to_discretize['weekday'] = to_discretize['instant'].apply(lambda instant: instant.day_of_week)
-    to_discretize['hour'] = to_discretize['instant'].apply(lambda instant: instant.hour)
-    to_discretize.drop(['instant'], axis=1, inplace=True)
-    # Return discretized timestamps
-    return to_discretize
-
-
-def circadian_timestamps_emd(
+def circadian_event_distribution_distance(
         event_log_1: pd.DataFrame,
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
@@ -73,4 +43,36 @@ def circadian_timestamps_emd(
         else:
             distances += [23]  # 23 is the maximum EMD value for two histograms with values between 0 and 23.
     # Return EMD metric
-    return np.mean(distances)
+    return mean(distances)
+
+
+def _discretize(
+        event_log: pd.DataFrame,
+        log_ids: EventLogIDs,
+        discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH
+) -> pd.DataFrame:
+    """
+        Create a pd.Dataframe with the hour (0-23) of the timestamps (start, end, or both, depending on [discretize_type]) of the events
+        in log [event_log] in one column ('hour'), and the day of the week in another column ('weekday').
+
+        :param event_log: event log to extract the instants of.
+        :param log_ids: mapping for the column IDs of the event log.
+        :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
+
+        :return: A pd.Dataframe with the hour of each discretized instant in the one column, and the weekday in other.
+        """
+    # Get the instants to discretize
+    if discretize_type == AbsoluteTimestampType.BOTH:
+        to_discretize = pd.concat(
+            [event_log[log_ids.start_time], event_log[log_ids.end_time]]
+        ).reset_index(drop=True).to_frame(name='instant')
+    elif discretize_type == AbsoluteTimestampType.START:
+        to_discretize = event_log[log_ids.start_time].to_frame(name='instant')
+    else:
+        to_discretize = event_log[log_ids.end_time].to_frame(name='instant')
+    # Compute their weekday
+    to_discretize['weekday'] = to_discretize['instant'].apply(lambda instant: instant.day_of_week)
+    to_discretize['hour'] = to_discretize['instant'].apply(lambda instant: instant.hour)
+    to_discretize.drop(['instant'], axis=1, inplace=True)
+    # Return discretized timestamps
+    return to_discretize

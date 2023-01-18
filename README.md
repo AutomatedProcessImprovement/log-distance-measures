@@ -188,12 +188,13 @@ maximum distance for two histograms with values from 0 to 23)
 ### Example of use
 
 ```python
-from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_similarity_metrics.circadian_event_distribution import circadian_event_distribution_distance
+from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS
 
-emd = circadian_timestamps_emd(
+emd = circadian_event_distribution_distance(
     event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    AbsoluteTimestampType.BOTH  # Consider both start/end timestamps of each activity instance
+    discretize_type=AbsoluteTimestampType.BOTH  # Consider both start/end timestamps of each activity instance
 )
 ```
 
