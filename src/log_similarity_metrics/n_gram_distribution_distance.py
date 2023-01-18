@@ -3,7 +3,7 @@ import pandas as pd
 from log_similarity_metrics.config import EventLogIDs
 
 
-def directly_follows_distance(
+def n_gram_distribution_distance(
         event_log_1: pd.DataFrame,
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
@@ -11,7 +11,7 @@ def directly_follows_distance(
         n: int = 3
 ) -> float:
     """
-    Compute the distance between the directly-follows relations of two event logs.
+    Compute the distance between the frequency of n-grams in two event logs.
 
     :param event_log_1: first event log.
     :param log_1_ids: mapping for the column IDs of the first event log.
@@ -19,7 +19,7 @@ def directly_follows_distance(
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param n: size of the n-grams to build (e.g. n=3 will compare sequences of 3 activity instances like ABC and ABD).
 
-    :return: the Control-Flow Log Similarity measure between [event_log_1] and [event_log_2].
+    :return: the sum of absolute errors between the frequency distribution of n-grams in [event_log_1] and [event_log_2].
     """
     # Build n-grams histogram for each event log
     n_histogram_1 = _compute_n_grams(event_log_1, log_1_ids, n)
