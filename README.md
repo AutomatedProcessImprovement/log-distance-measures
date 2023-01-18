@@ -219,9 +219,9 @@ Distance measure computing how different the cycle time discretized histograms o
 import datetime
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.cycle_times import cycle_time_emd
+from log_similarity_metrics.cycle_time_distribution import cycle_time_distribution_distance
 
-distance = cycle_time_emd(
+distance = cycle_time_distribution_distance(
     event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     bin_size=datetime.timedelta(hours=1)  # Bins of 1 hour

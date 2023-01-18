@@ -7,7 +7,7 @@ from scipy.stats import wasserstein_distance
 from log_similarity_metrics.config import EventLogIDs
 
 
-def cycle_time_emd(
+def cycle_time_distribution_distance(
         event_log_1: pd.DataFrame,
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
