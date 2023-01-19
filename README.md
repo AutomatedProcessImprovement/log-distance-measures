@@ -115,7 +115,7 @@ distance = absolute_event_distribution_distance(
 )
 ```
 
-The timestamp EMD metric can be also used to compare the distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end
+This EMD metric can be also used to compare the distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end
 timestamps (with `AbsoluteHourEmdType.END`), instead of both of them.
 
 Furthermore, the binning is performed to hour by default, but it can be customized passing another function discretize the total amount of
@@ -199,6 +199,39 @@ distance = circadian_event_distribution_distance(
 ```
 
 Similarly than with the Absolute Event Distribution Distance, the Circadian Event Distribution Distance can be also used to compare the
+distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end timestamps (with `AbsoluteHourEmdType.END`), instead of
+both of them.
+
+&nbsp;
+
+## Relative Event Distribution Distance
+
+Distance measure computing how different the histograms of the relative (w.r.t. the start of each case) timestamps of two event logs are,
+discretizing the timestamps by absolute hour.
+
+1. Take all the start timestamps, the end timestamps, or both.
+2. Make them relative w.r.t. the start of their process case (e.g. the first timestamp in a case is 0, the second one is the interval from
+   the first one).
+3. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` goes to the same
+   bin).
+4. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+
+### Example of use
+
+```python
+from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS
+from log_similarity_metrics.relative_event_distribution import relative_event_distribution_distance, discretize_to_hour
+
+# Call passing the event logs, its column ID mappings, timestamp type, and discretize function
+distance = relative_event_distribution_distance(
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    discretize_type=AbsoluteTimestampType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
+    discretize_instant=discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
+)
+```
+
+Similarly than with the Absolute Event Distribution Distance, the Relative Event Distribution Distance can be also used to compare the
 distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end timestamps (with `AbsoluteHourEmdType.END`), instead of
 both of them.
 
