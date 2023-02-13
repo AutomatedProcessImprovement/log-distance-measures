@@ -21,9 +21,11 @@ def n_gram_distribution_distance(
 
     :return: the sum of absolute errors between the frequency distribution of n-grams in [event_log_1] and [event_log_2].
     """
+    # Map of each activity to a number
+    activity_labels = list(set(event_log_1[log_1_ids.activity].unique().tolist() + event_log_2[log_2_ids.activity].unique().tolist()))
     # Build n-grams histogram for each event log
-    n_histogram_1 = _compute_n_grams(event_log_1, log_1_ids, n)
-    n_histogram_2 = _compute_n_grams(event_log_2, log_2_ids, n)
+    n_histogram_1 = _compute_n_grams(event_log_1, log_1_ids, activity_labels, n)
+    n_histogram_2 = _compute_n_grams(event_log_2, log_2_ids, activity_labels, n)
     # Fill each histogram with a 0 for the n_grams missing from the other histogram
     frequencies_1, frequencies_2 = [], []
     for key in set(list(n_histogram_1.keys()) + list(n_histogram_2.keys())):
@@ -37,18 +39,19 @@ def n_gram_distribution_distance(
     return sum([abs(x - y) for (x, y) in zip(frequencies_1, frequencies_2)])
 
 
-def _compute_n_grams(event_log: pd.DataFrame, log_ids: EventLogIDs, n: int = 3) -> dict:
+def _compute_n_grams(event_log: pd.DataFrame, log_ids: EventLogIDs, activity_labels: list, n: int = 3) -> dict:
     """
     Compute the n-grams of activities (directly-follows) of an event log.
 
     :param event_log: event log to analyze.
     :param log_ids: mapping for the column IDs of the event log.
+    :param activity_labels: list with the unique activity labels to map them to n-grams.
     :param n: size of the n-grams to compute.
 
     :return: a dict with the n-grams as key, and their absolute frequency as value.
     """
-    # Map each activity to a number
-    activity_to_int = [None] + list(event_log[log_ids.activity].unique())
+    # Extend activity IDs with "None" (for start end of trace)
+    activity_to_int = [None] + activity_labels
     # Compute n-grams
     n_grams = {}
     for case_id, events in event_log.groupby(log_ids.case):

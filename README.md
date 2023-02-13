@@ -96,7 +96,7 @@ Distance measure computing how different the histograms of the timestamps of two
 hour.
 
 1. Take all the start timestamps, the end timestamps, or both.
-2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` goes to the same
+2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` go to the same
    bin).
 3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
@@ -150,7 +150,7 @@ distance = absolute_event_distribution_distance(
 Distance measure computing how different the discretized histograms of the arrival events of two event logs are.
 
 1. Compute the arrival timestamp for each process case (its first start time).
-2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` goes to the same
+2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` go to the same
    bin).
 3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
@@ -178,7 +178,7 @@ same weekday together, and discretizing them to the hour in the day.
 1. Take all the start timestamps, the end timestamps, or both.
 2. Group the timestamps by their weekday (e.g. all the timestamps recorded on Monday of one log are going to be compared with the timestamps
    recorded on Monday of the other event log).
-3. Discretize the timestamps to their hour (those timestamps between '10:00:00' and '10:59:59' goes to the same bin).
+3. Discretize the timestamps to their hour (those timestamps between '10:00:00' and '10:59:59' go to the same bin).
 4. Compare the histograms of the two event logs for each weekday (with the Wasserstein Distance, a.k.a. EMD), and compute the average.
 
 _Extra 1_: If there are no recorded timestamps for one of the weekdays in both logs, no distance is measured for that day.
@@ -210,10 +210,9 @@ Distance measure computing how different the histograms of the relative (w.r.t. 
 discretizing the timestamps by absolute hour.
 
 1. Take all the start timestamps, the end timestamps, or both.
-2. Make them relative w.r.t. the start of their process case (e.g. the first timestamp in a case is 0, the second one is the interval from
-   the first one).
-3. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` goes to the same
-   bin).
+2. Make them relative w.r.t. the start of their process case (e.g. the first timestamp in a case is 0, the second one is the time itnerval
+   from the first one).
+3. Discretize the durations by hour (e.g. those durations between `0` and `3599` go to the same bin).
 4. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
 ### Example of use
