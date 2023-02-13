@@ -31,8 +31,8 @@ def control_flow_log_distance(
     sequences_1, sequences_2 = _event_logs_to_activity_sequences(event_log_1, log_1_ids, event_log_2, log_2_ids)
     # Calculate the DL distance between each pair of traces
     distances = []
-    for i_1, sequence_1 in sequences_1['sequence'].iteritems():
-        for i_2, sequence_2 in sequences_2['sequence'].iteritems():
+    for i_1, sequence_1 in sequences_1['sequence'].items():
+        for i_2, sequence_2 in sequences_2['sequence'].items():
             distance = damerau_levenshtein_distance(sequence_1, sequence_2) / max(len(sequence_1), len(sequence_2))
             distances += [{'i_1': i_1, 'i_2': i_2, 'distance': distance}]
     distance_matrix = pd.DataFrame(distances).set_index(['i_1', 'i_2'])
