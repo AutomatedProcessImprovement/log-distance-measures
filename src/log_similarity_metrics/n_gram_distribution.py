@@ -8,7 +8,8 @@ def n_gram_distribution_distance(
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
-        n: int = 3
+        n: int = 3,
+        normalize: bool = True
 ) -> float:
     """
     Compute the distance between the frequency of n-grams in two event logs.
@@ -18,6 +19,7 @@ def n_gram_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param n: size of the n-grams to build (e.g. n=3 will compare sequences of 3 activity instances like ABC and ABD).
+    :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the sum of absolute errors between the frequency distribution of n-grams in [event_log_1] and [event_log_2].
     """
@@ -35,8 +37,12 @@ def n_gram_distribution_distance(
         frequencies_2 += [
             n_histogram_2[key] if key in n_histogram_2 else 0
         ]
-    # Return EMD metric
-    return sum([abs(x - y) for (x, y) in zip(frequencies_1, frequencies_2)])
+    # Compute distance metric
+    distance = sum([abs(x - y) for (x, y) in zip(frequencies_1, frequencies_2)])
+    if normalize:
+        distance = distance / (sum(frequencies_1) + sum(frequencies_2))
+    # Return metric
+    return distance
 
 
 def _compute_n_grams(event_log: pd.DataFrame, log_ids: EventLogIDs, activity_labels: list, n: int = 3) -> dict:

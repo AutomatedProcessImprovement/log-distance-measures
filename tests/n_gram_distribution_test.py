@@ -46,17 +46,63 @@ def test_n_gram_distribution_distance_similar_logs():
     # Read same event log twice
     event_log_1 = _read_event_log("./tests/assets/test_event_log_1.csv")
     event_log_2 = _read_event_log("./tests/assets/test_event_log_1.csv")
-    # EMD should be 0 as both distributions are exactly the same
+    # Normalized N-gram distance should be 0 as both distributions are exactly the same
     assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2) == 0.0
     assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3) == 0.0
     assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4) == 0.0
+    # N-gram distance should be 0 as both distributions are exactly the same
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2, False) == 0.0
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3, False) == 0.0
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4, False) == 0.0
+
+
+def test_n_gram_distribution_distance_disjoint_logs():
+    # Read same event log twice
+    event_log_1 = _read_event_log("./tests/assets/test_event_log_1.csv")
+    event_log_2 = _read_event_log("./tests/assets/test_event_log_2.csv")
+    # Normalized N-gram distance should be 1.0 as both distributions are exactly the same
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2) == 1.0
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3) == 1.0
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4) == 1.0
+    # N-gram distance should be the highest value possible for this logs
+    num_bigrams = sum(
+        [len(events) + 1 for case_id, events in event_log_1.groupby(DEFAULT_CSV_IDS.case)] +
+        [len(events) + 1 for case_id, events in event_log_2.groupby(DEFAULT_CSV_IDS.case)]
+    )
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2, False) == num_bigrams
+    num_trigrams = sum(
+        [len(events) + 2 for case_id, events in event_log_1.groupby(DEFAULT_CSV_IDS.case)] +
+        [len(events) + 2 for case_id, events in event_log_2.groupby(DEFAULT_CSV_IDS.case)]
+    )
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3, False) == num_trigrams
+    num_cuatrigrams = sum(
+        [len(events) + 3 for case_id, events in event_log_1.groupby(DEFAULT_CSV_IDS.case)] +
+        [len(events) + 3 for case_id, events in event_log_2.groupby(DEFAULT_CSV_IDS.case)]
+    )
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4, False) == num_cuatrigrams
 
 
 def test_n_gram_distribution_distance_different_logs():
     # Read event logs with similar timestamp distribution but different resources, activity names and trace IDs
     event_log_1 = _read_event_log("./tests/assets/test_event_log_1.csv")
     event_log_2 = _read_event_log("./tests/assets/test_event_log_3.csv")
-    # EMD should be 0 as both distributions are exactly the same
-    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2) == 12
-    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3) == 16
-    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4) == 20
+    # Normalized N-gram distance should maintain the proportions
+    num_bigrams = sum(
+        [len(events) + 1 for case_id, events in event_log_1.groupby(DEFAULT_CSV_IDS.case)] +
+        [len(events) + 1 for case_id, events in event_log_2.groupby(DEFAULT_CSV_IDS.case)]
+    )
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2) == 12 / num_bigrams
+    num_trigrams = sum(
+        [len(events) + 2 for case_id, events in event_log_1.groupby(DEFAULT_CSV_IDS.case)] +
+        [len(events) + 2 for case_id, events in event_log_2.groupby(DEFAULT_CSV_IDS.case)]
+    )
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3) == 16 / num_trigrams
+    num_cuatrigrams = sum(
+        [len(events) + 3 for case_id, events in event_log_1.groupby(DEFAULT_CSV_IDS.case)] +
+        [len(events) + 3 for case_id, events in event_log_2.groupby(DEFAULT_CSV_IDS.case)]
+    )
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4) == 20 / num_cuatrigrams
+    # N-gram distance should be the number of different n-grams
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 2, False) == 12
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 3, False) == 16
+    assert n_gram_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, 4, False) == 20
