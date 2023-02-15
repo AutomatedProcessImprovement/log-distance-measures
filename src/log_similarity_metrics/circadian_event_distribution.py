@@ -13,6 +13,7 @@ def circadian_event_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
+        normalize: bool = True
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs, windowed by weekday (e.g. the instants
@@ -23,6 +24,7 @@ def circadian_event_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
+    :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the timestamp distribution of the two event logs windowed by weekday.
     """
@@ -42,8 +44,12 @@ def circadian_event_distribution_distance(
             distances += [wasserstein_distance(window_1, window_2)]
         else:
             distances += [23]  # 23 is the maximum EMD value for two histograms with values between 0 and 23.
-    # Return EMD metric
-    return mean(distances)
+    # Compute distance metric
+    distance = mean(distances)
+    if normalize:
+        distance = distance / 23
+    # Return metric
+    return distance
 
 
 def _discretize(
