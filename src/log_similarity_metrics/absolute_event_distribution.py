@@ -102,7 +102,8 @@ def absolute_event_distribution_distance(
     # Compute distance metric
     distance = wasserstein_distance(discretized_instants_1, discretized_instants_2)
     if normalize:
-        distance = distance / max(max(discretized_instants_1), max(discretized_instants_2))
+        max_value = max(max(discretized_instants_1), max(discretized_instants_2))
+        distance = distance / max_value if max_value > 0 else 0
     # Return metric
     return distance
 
