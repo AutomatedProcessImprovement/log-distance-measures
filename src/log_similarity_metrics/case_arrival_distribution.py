@@ -13,7 +13,8 @@ def case_arrival_distribution_distance(
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
-        discretize_instant=discretize_to_hour  # function to discretize a total amount of seconds into bins
+        discretize_instant=discretize_to_hour,  # function to discretize a total amount of seconds into bins
+        normalize: bool = True
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of case arrival of two event logs. To get this distribution, the timestamps are
@@ -24,6 +25,7 @@ def case_arrival_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
+    :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the case arrival distribution of the two event logs, measuring the amount of movements (considering their
     distance) to transform one timestamp histogram into the other.
@@ -40,8 +42,13 @@ def case_arrival_distribution_distance(
     discretized_arrivals_2 = [
         discretize_instant(difference.total_seconds()) for difference in (arrivals_2[log_2_ids.start_time] - first_arrival)
     ]
-    # Return discretized timestamps
-    return wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
+    # Compute distance metric
+    distance = wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
+    if normalize:
+        max_value = max(max(discretized_arrivals_1), max(discretized_arrivals_2))
+        distance = distance / max_value if max_value > 0 else 0
+    # Return metric
+    return distance
 
 
 def _get_arrival_events(event_log: pd.DataFrame, log_ids: EventLogIDs) -> pd.DataFrame:
@@ -66,7 +73,8 @@ def inter_arrival_distribution_distance(
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
-        bin_size: datetime.timedelta
+        bin_size: datetime.timedelta,
+        normalize: bool = True
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of inter-arrival times of two event logs. To get this distribution, the
@@ -77,6 +85,7 @@ def inter_arrival_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param bin_size: time interval to define the bin size.
+    :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the inter-arrival time distribution of the two event logs, measuring the amount of movements (considering their
     distance) to transform one inter-arrival time histogram into the other.
@@ -87,8 +96,13 @@ def inter_arrival_distribution_distance(
     # Discretize each instant to its corresponding "bin"
     discretized_inter_arrivals_1 = [math.floor(inter_arrival / bin_size) for inter_arrival in inter_arrivals_1]
     discretized_inter_arrivals_2 = [math.floor(inter_arrival / bin_size) for inter_arrival in inter_arrivals_2]
-    # Return EMD metric
-    return wasserstein_distance(discretized_inter_arrivals_1, discretized_inter_arrivals_2)
+    # Compute distance metric
+    distance = wasserstein_distance(discretized_inter_arrivals_1, discretized_inter_arrivals_2)
+    if normalize:
+        max_value = max(max(discretized_inter_arrivals_1), max(discretized_inter_arrivals_2))
+        distance = distance / max_value if max_value > 0 else 0
+    # Return metric
+    return distance
 
 
 def _get_inter_arrival_times(event_log: pd.DataFrame, log_ids: EventLogIDs) -> list:
