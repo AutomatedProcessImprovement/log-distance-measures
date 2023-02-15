@@ -77,7 +77,8 @@ def absolute_event_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
-        discretize_instant=discretize_to_hour  # function to discretize a total amount of seconds into bins
+        discretize_instant=discretize_to_hour,  # function to discretize a total amount of seconds into bins
+        normalize: bool = True
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
@@ -89,6 +90,7 @@ def absolute_event_distribution_distance(
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
     :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
+    :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the timestamp distribution of the two event logs, measuring the amount of movements (considering their
     distance) to transform one timestamp histogram into the other.
@@ -97,8 +99,12 @@ def absolute_event_distribution_distance(
     discretized_instants_1, discretized_instants_2 = _discretize(
         event_log_1, log_1_ids, event_log_2, log_2_ids, discretize_type, discretize_instant
     )
-    # Return EMD metric
-    return wasserstein_distance(discretized_instants_1, discretized_instants_2)
+    # Compute distance metric
+    distance = wasserstein_distance(discretized_instants_1, discretized_instants_2)
+    if normalize:
+        distance = distance / max(max(discretized_instants_1), max(discretized_instants_2))
+    # Return metric
+    return distance
 
 
 def absolute_event_distribution_ks(
