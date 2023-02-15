@@ -12,7 +12,8 @@ def cycle_time_distribution_distance(
         log_1_ids: EventLogIDs,
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
-        bin_size: datetime.timedelta
+        bin_size: datetime.timedelta,
+        normalize: bool = True
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of cycle times of two event logs. To get this distribution, the cycle times are
@@ -23,6 +24,7 @@ def cycle_time_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param bin_size: time interval to define the bin size.
+    :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the cycle time distribution of the two event logs, measuring the amount of movements (considering their
     distance) to transform one cycle time histogram into the other.
@@ -39,5 +41,10 @@ def cycle_time_distribution_distance(
     min_duration = min(trace_durations_1 + trace_durations_2)
     discretized_durations_1 = [math.floor((trace_duration - min_duration) / bin_size) for trace_duration in trace_durations_1]
     discretized_durations_2 = [math.floor((trace_duration - min_duration) / bin_size) for trace_duration in trace_durations_2]
-    # Return EMD metric
-    return wasserstein_distance(discretized_durations_1, discretized_durations_2)
+    # Compute distance metric
+    distance = wasserstein_distance(discretized_durations_1, discretized_durations_2)
+    if normalize:
+        max_value = max(max(discretized_durations_1), max(discretized_durations_2))
+        distance = distance / max_value if max_value > 0 else 0
+    # Return metric
+    return distance
