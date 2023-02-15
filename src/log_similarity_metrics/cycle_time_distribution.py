@@ -13,7 +13,7 @@ def cycle_time_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         bin_size: datetime.timedelta,
-        normalize: bool = True
+        normalize: bool = False
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of cycle times of two event logs. To get this distribution, the cycle times are
@@ -44,6 +44,8 @@ def cycle_time_distribution_distance(
     # Compute distance metric
     distance = wasserstein_distance(discretized_durations_1, discretized_durations_2)
     if normalize:
+        print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
+              "long samples may cause a higher reduction of the error.")
         max_value = max(max(discretized_durations_1), max(discretized_durations_2))
         distance = distance / max_value if max_value > 0 else 0
     # Return metric

@@ -22,6 +22,16 @@ def test_case_arrival_distribution_distance_similar_logs():
     event_log_2 = _read_event_log("./tests/assets/test_event_log_4.csv")
     # Normalized distance should be 0 as both distributions are exactly the same
     assert case_arrival_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_minute, normalize=True
+    ) == 0.0
+    assert case_arrival_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_hour, normalize=True
+    ) == 0.0
+    assert case_arrival_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_day, normalize=True
+    ) == 0.0
+    # Non normalized distance should be 0 as both distributions are exactly the same
+    assert case_arrival_distribution_distance(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_minute
     ) == 0.0
     assert case_arrival_distribution_distance(
@@ -30,16 +40,6 @@ def test_case_arrival_distribution_distance_similar_logs():
     assert case_arrival_distribution_distance(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_day
     ) == 0.0
-    # Non normalized distance should be 0 as both distributions are exactly the same
-    assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_minute, normalize=False
-    ) == 0.0
-    assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_hour, normalize=False
-    ) == 0.0
-    assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_day, normalize=False
-    ) == 0.0
 
 
 def test_case_arrival_distribution_distance_different_logs():
@@ -47,16 +47,20 @@ def test_case_arrival_distribution_distance_different_logs():
     event_log_1 = _read_event_log("./tests/assets/test_event_log_4.csv")
     event_log_2 = _read_event_log("./tests/assets/test_event_log_6.csv")
     # Normalized distance should be positive by hour but 0 by day as both distributions have differences in the hour scale
-    norm_dist = case_arrival_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_to_hour)
+    norm_dist = case_arrival_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_to_hour, normalize=True
+    )
     assert norm_dist > 0.0
     assert norm_dist < 1.0
-    assert case_arrival_distribution_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_to_day) == 0.0
-    # Normalized distance should be positive by hour but 0 by day as both distributions have differences in the hour scale
     assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_to_hour, normalize=False
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_to_day, normalize=True
+    ) == 0.0
+    # Non normalized distance should be positive by hour but 0 by day as both distributions have differences in the hour scale
+    assert case_arrival_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_to_hour
     ) == 5 / 9
     assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_to_day, normalize=False
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_to_day
     ) == 0.0
 
 
@@ -102,6 +106,16 @@ def test_inter_arrival_distribution_distance_similar_logs():
     event_log_2 = _read_event_log("./tests/assets/test_event_log_5.csv")
     # Normalized distance should be 0 as both distributions are exactly the same
     assert inter_arrival_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, bin_size=datetime.timedelta(minutes=10), normalize=True
+    ) == 0.0
+    assert inter_arrival_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, bin_size=datetime.timedelta(minutes=30), normalize=True
+    ) == 0.0
+    assert inter_arrival_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, bin_size=datetime.timedelta(hours=1), normalize=True
+    ) == 0.0
+    # Non normalized distance should be 0 as both distributions are exactly the same
+    assert inter_arrival_distribution_distance(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, bin_size=datetime.timedelta(minutes=10)
     ) == 0.0
     assert inter_arrival_distribution_distance(
@@ -109,16 +123,6 @@ def test_inter_arrival_distribution_distance_similar_logs():
     ) == 0.0
     assert inter_arrival_distribution_distance(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, bin_size=datetime.timedelta(hours=1)
-    ) == 0.0
-    # Non normalized distance should be 0 as both distributions are exactly the same
-    assert inter_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, bin_size=datetime.timedelta(minutes=10), normalize=False
-    ) == 0.0
-    assert inter_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, bin_size=datetime.timedelta(minutes=30), normalize=False
-    ) == 0.0
-    assert inter_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, bin_size=datetime.timedelta(hours=1), normalize=False
     ) == 0.0
 
 

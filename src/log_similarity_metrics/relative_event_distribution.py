@@ -12,7 +12,7 @@ def relative_event_distribution_distance(
         log_2_ids: EventLogIDs,
         discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
         discretize_instant=discretize_to_hour,  # function to discretize a total amount of seconds into bins
-        normalize: bool = True
+        normalize: bool = False
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs relative to the start of their trace. To get this
@@ -36,6 +36,8 @@ def relative_event_distribution_distance(
     # Compute distance metric
     distance = wasserstein_distance(relative_1, relative_2)
     if normalize:
+        print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
+              "long samples may cause a higher reduction of the error.")
         max_value = max(max(relative_1), max(relative_2))
         distance = distance / max_value if max_value > 0 else 0
     return distance

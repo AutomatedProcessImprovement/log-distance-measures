@@ -14,7 +14,7 @@ def case_arrival_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         discretize_instant=discretize_to_hour,  # function to discretize a total amount of seconds into bins
-        normalize: bool = True
+        normalize: bool = False
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of case arrival of two event logs. To get this distribution, the timestamps are
@@ -45,6 +45,8 @@ def case_arrival_distribution_distance(
     # Compute distance metric
     distance = wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
     if normalize:
+        print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
+              "long samples may cause a higher reduction of the error.")
         max_value = max(max(discretized_arrivals_1), max(discretized_arrivals_2))
         distance = distance / max_value if max_value > 0 else 0
     # Return metric
@@ -74,7 +76,7 @@ def inter_arrival_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         bin_size: datetime.timedelta,
-        normalize: bool = True
+        normalize: bool = False
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of inter-arrival times of two event logs. To get this distribution, the
@@ -99,6 +101,8 @@ def inter_arrival_distribution_distance(
     # Compute distance metric
     distance = wasserstein_distance(discretized_inter_arrivals_1, discretized_inter_arrivals_2)
     if normalize:
+        print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
+              "long samples may cause a higher reduction of the error.")
         max_value = max(max(discretized_inter_arrivals_1), max(discretized_inter_arrivals_2))
         distance = distance / max_value if max_value > 0 else 0
     # Return metric
