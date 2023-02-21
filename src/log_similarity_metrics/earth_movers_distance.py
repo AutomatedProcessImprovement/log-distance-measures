@@ -38,7 +38,7 @@ def earth_movers_distance(hist_1: list, hist_2: list, extra_mass: float = 1.0) -
                 cost_matrix[i][j] = abs(hist_1[i] - hist_2[j])
             for j in range(len(hist_1) - len(hist_2)):
                 # Distance of considering observation [i] from [hist_1] as extra observation (deletion)
-                cost_matrix[i][j] = extra_mass
+                cost_matrix[i][j + len(hist_2)] = extra_mass
         # Compute combination of movements that minimize the total cost
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
         # Compute distance

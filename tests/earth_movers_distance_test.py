@@ -15,12 +15,21 @@ def test_earth_movers_distance():
     assert earth_movers_distance([1, 1, 1, 3, 3, 3, 5, 5, 5], [1, 1, 1, 3, 3, 3, 5, 5, 5, 6]) == 1
     assert earth_movers_distance([1, 1, 1, 3, 3, 3, 5, 5, 5], [1, 1, 1, 3, 3, 3, 4, 5, 5, 5]) == 1
     assert earth_movers_distance([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4], [1, 2, 3, 4]) == 12
+    assert earth_movers_distance([1, 1, 1, 2, 4, 4, 5, 5, 5, 6, 6], [12, 12, 13, 14, 14, 14, 15, 16, 16, 16, 17]) == 119
+    assert earth_movers_distance([1, 1, 1, 2, 4, 4, 5, 5, 5, 6, 6], [12, 12, 13, 14, 14, 14, 15, 16, 16, 16]) == 104
 
 
 def test__clean_histograms():
     # No elements in common
     assert _clean_histograms([1, 2, 3, 4, 5], [6, 7, 8, 9, 10]) == ([1, 2, 3, 4, 5], [6, 7, 8, 9, 10])
     assert _clean_histograms([1, 1, 1, 2, 2, 3, 4], [5, 5, 6, 7, 8, 8, 9]) == ([1, 1, 1, 2, 2, 3, 4], [5, 5, 6, 7, 8, 8, 9])
+    assert _clean_histograms(
+        [1, 1, 1, 2, 4, 4, 5, 5, 5, 6, 6],
+        [12, 12, 13, 14, 14, 14, 15, 16, 16, 16]
+    ) == (
+               [1, 1, 1, 2, 4, 4, 5, 5, 5, 6, 6],
+               [12, 12, 13, 14, 14, 14, 15, 16, 16, 16]
+           )
     # Same histograms
     assert _clean_histograms([1, 1, 1, 1, 1, 2, 2, 2, 2, 2], [1, 2, 1, 2, 1, 2, 1, 2, 1, 2]) == ([], [])
     assert _clean_histograms([1, 1, 2, 3, 4, 4, 5, 6, 7], [4, 3, 1, 2, 1, 7, 5, 6, 4]) == ([], [])
@@ -29,3 +38,4 @@ def test__clean_histograms():
     assert _clean_histograms([1, 1, 1, 3, 4, 4, 6], [1, 1, 1, 1, 3, 8, 8]) == ([4, 4, 6], [1, 8, 8])
     assert _clean_histograms([1, 1, 3, 3, 3, 4, 7, 9], [1, 2, 2, 3, 3, 4, 8, 12]) == ([1, 3, 7, 9], [2, 2, 8, 12])
     assert _clean_histograms([1, 1, 1, 3, 3, 3, 5, 5, 5], [1, 1, 1, 3, 3, 3, 5, 5, 5, 6]) == ([], [6])
+    assert _clean_histograms([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4], [1, 2, 3, 4]) == ([1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4], [])
