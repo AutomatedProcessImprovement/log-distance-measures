@@ -46,10 +46,26 @@ def test_control_flow_log_distance():
             {'case_id': "trace-03", 'Activity': "Oops", 'start_time': 32, 'end_time': 35}
         ]
     )
-    # Get log distance
+    # Get log distance one core
     cfld = control_flow_log_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS)
     # Check result
     assert cfld == (0.85 / 3)
+    # Get log distance parallel
+    cfld = control_flow_log_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, parallel=True)
+    # Check result
+    assert cfld == (0.85 / 3)
+
+
+def test_control_flow_log_distance_sequential_vs_parallel():
+    # Read event logs with similar timestamp distribution but different resources, activity names and trace IDs
+    event_log_1 = _read_event_log("./assets/LoanApp_delays.csv")
+    event_log_2 = _read_event_log("./assets/LoanApp_no_delays.csv")
+    # Compute CFLD distances both in sequential and parallel
+    cfld_seq = control_flow_log_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, parallel=False)
+    # Compute CFLD distances both in sequential and parallel
+    cfld_par = control_flow_log_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, parallel=True)
+    # Assert both results are the same
+    assert cfld_seq == cfld_par
 
 
 def test__event_logs_to_activity_sequences():
