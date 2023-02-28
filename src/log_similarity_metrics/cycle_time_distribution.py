@@ -31,11 +31,11 @@ def cycle_time_distribution_distance(
     """
     # Get trace durations of each trace for the first log
     trace_durations_1 = []
-    for case, events in event_log_1.groupby([log_1_ids.case]):
+    for case, events in event_log_1.groupby(log_1_ids.case):
         trace_durations_1 += [events[log_1_ids.end_time].max() - events[log_1_ids.start_time].min()]
     # Get trace durations of each trace for the second log
     trace_durations_2 = []
-    for case, events in event_log_2.groupby([log_2_ids.case]):
+    for case, events in event_log_2.groupby(log_2_ids.case):
         trace_durations_2 += [events[log_2_ids.end_time].max() - events[log_2_ids.start_time].min()]
     # Discretize each instant to its corresponding "bin"
     min_duration = min(trace_durations_1 + trace_durations_2)

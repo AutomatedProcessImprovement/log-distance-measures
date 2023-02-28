@@ -120,7 +120,7 @@ def _get_inter_arrival_times(event_log: pd.DataFrame, log_ids: EventLogIDs) -> l
     """
     # Get absolute arrivals
     arrivals = []
-    for case, events in event_log.groupby([log_ids.case]):
+    for case, events in event_log.groupby(log_ids.case):
         arrivals += [events[log_ids.start_time].min()]
     arrivals.sort()
     # Compute times between each arrival and the next one

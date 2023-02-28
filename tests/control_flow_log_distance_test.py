@@ -58,8 +58,8 @@ def test_control_flow_log_distance():
 
 def test_control_flow_log_distance_sequential_vs_parallel():
     # Read event logs with similar timestamp distribution but different resources, activity names and trace IDs
-    event_log_1 = _read_event_log("./assets/LoanApp_delays.csv")
-    event_log_2 = _read_event_log("./assets/LoanApp_no_delays.csv")
+    event_log_1 = _read_event_log("./tests/assets/LoanApp_delays.csv")
+    event_log_2 = _read_event_log("./tests/assets/LoanApp_no_delays.csv")
     # Compute CFLD distances both in sequential and parallel
     cfld_seq = control_flow_log_distance(event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, parallel=False)
     # Compute CFLD distances both in sequential and parallel

@@ -34,6 +34,8 @@ def control_flow_log_distance(
     """
     # Transform the event log to a list of character sequences representing the traces
     sequences_1, sequences_2 = _event_logs_to_activity_sequences(event_log_1, log_1_ids, event_log_2, log_2_ids)
+    sequences_1.reset_index(drop=True, inplace=True)
+    sequences_2.reset_index(drop=True, inplace=True)
     # Calculate the DL distance between each pair of traces
     cost_matrix = _compute_distance_matrix(sequences_1, sequences_2, parallel)
     # Get the optimum pairing
@@ -78,7 +80,7 @@ def _event_logs_to_activity_sequences(
     processed_event_log_1 = _event_log_to_activity_sequence(event_log_1, log_1_ids, mapping)
     processed_event_log_2 = _event_log_to_activity_sequence(event_log_2, log_2_ids, mapping)
     # Return value
-    return processed_event_log_1.reset_index(drop=True), processed_event_log_2.reset_index(drop=True)
+    return processed_event_log_1, processed_event_log_2
 
 
 def _event_log_to_activity_sequence(event_log: pd.DataFrame, log_ids: EventLogIDs, mapping: dict) -> pd.DataFrame:
@@ -96,7 +98,7 @@ def _event_log_to_activity_sequence(event_log: pd.DataFrame, log_ids: EventLogID
     case_ids = []
     activity_sequences = []
     # For each case, map the activities to character sequence
-    for case_id, events in event_log.groupby([log_ids.case]):
+    for case_id, events in event_log.groupby(log_ids.case):
         case_ids += [case_id]
         sorted_events = events.sort_values([log_ids.end_time, log_ids.start_time])
         activity_sequences += [
