@@ -2,8 +2,7 @@ import math
 from typing import Tuple
 
 import pandas as pd
-from dtw import dtw
-from scipy.stats import wasserstein_distance, kstest
+from scipy.stats import wasserstein_distance
 
 from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType
 
@@ -108,72 +107,3 @@ def absolute_event_distribution_distance(
         distance = distance / max_value if max_value > 0 else 0
     # Return metric
     return distance
-
-
-def absolute_event_distribution_ks(
-        event_log_1: pd.DataFrame,
-        log_1_ids: EventLogIDs,
-        event_log_2: pd.DataFrame,
-        log_2_ids: EventLogIDs,
-        discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
-        discretize_instant=discretize_to_hour  # function to discretize a total amount of seconds into bins
-) -> float:
-    """
-    Kolmogorov-Smirnov test between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
-    discretized to bins of size given by [discretize_instant] (default by hour).
-
-    :param event_log_1: first event log.
-    :param log_1_ids: mapping for the column IDs of the first event log.
-    :param event_log_2: second event log.
-    :param log_2_ids: mapping for the column IDs for the second event log.
-    :param discretize_type: type of KS test (only take into account start timestamps, only end timestamps, or both).
-    :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
-
-    :return: the Kolmogorov-Smirnov test statistic between the timestamp distribution of the two event logs.
-    """
-    # Get discretized start and/or end timestamps
-    discretized_instants_1, discretized_instants_2 = _discretize(
-        event_log_1, log_1_ids, event_log_2, log_2_ids, discretize_type, discretize_instant
-    )
-    # Return KS statistic
-    return kstest(discretized_instants_1, discretized_instants_2)[0]  # Return the statistic of the Kolmogorov-Smirnov
-
-
-def absolute_event_distribution_dtw(
-        event_log_1: pd.DataFrame,
-        log_1_ids: EventLogIDs,
-        event_log_2: pd.DataFrame,
-        log_2_ids: EventLogIDs,
-        discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
-        discretize_instant=discretize_to_hour  # function to discretize a total amount of seconds into bins
-) -> float:
-    """
-    Dynamic Time Warping metric between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
-    discretized to bins of size given by [discretize_instant] (default by hour).
-
-    :param event_log_1: first event log.
-    :param log_1_ids: mapping for the column IDs of the first event log.
-    :param event_log_2: second event log.
-    :param log_2_ids: mapping for the column IDs for the second event log.
-    :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
-    :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
-
-    :return: the DTW metric between the timestamp distribution of the two event logs.
-    """
-    # Get discretized start and/or end timestamps
-    discretized_instants_1, discretized_instants_2 = _discretize(
-        event_log_1, log_1_ids, event_log_2, log_2_ids, discretize_type, discretize_instant
-    )
-    # Group them to build the histogram
-    max_instant = max(max(discretized_instants_1), max(discretized_instants_2))
-    hist_1 = [0] * (max_instant + 1)
-    for i in discretized_instants_1:
-        hist_1[i] += 1
-    hist_2 = [0] * (max_instant + 1)
-    for i in discretized_instants_2:
-        hist_2[i] += 1
-    # Add one 0 in the start and end of each histogram, to avoid penalization in case of late start/end in one of the cases
-    hist_1 = [0] + hist_1 + [0]
-    hist_2 = [0] + hist_2 + [0]
-    # Return EMD metric
-    return dtw(hist_1, hist_2, keep_internals=True).distance

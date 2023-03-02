@@ -10,7 +10,6 @@ setup(
         'scipy',
         'numpy',
         'jellyfish',
-        'pulp',
-        'dtw'
+        'pulp'
     ]
 )
