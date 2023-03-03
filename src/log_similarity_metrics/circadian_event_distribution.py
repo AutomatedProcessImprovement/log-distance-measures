@@ -1,6 +1,5 @@
 from statistics import mean
 
-import numpy as np
 import pandas as pd
 from scipy.stats import wasserstein_distance
 
@@ -31,18 +30,19 @@ def circadian_event_distribution_distance(
     # Get discretized start and/or end timestamps
     discretized_instants_1 = _discretize(event_log_1, log_1_ids, discretize_type)
     discretized_instants_2 = _discretize(event_log_2, log_2_ids, discretize_type)
-    # Get unique weekdays
-    weekdays = set(
-        np.append(discretized_instants_1['weekday'].unique(), discretized_instants_2['weekday'].unique())
-    )
     # Compute the distance between the instant in the event logs for each weekday
     distances = []
-    for week_day in weekdays:
+    for week_day in range(7):  # All weekdays
         window_1 = discretized_instants_1[discretized_instants_1['weekday'] == week_day]['hour']
         window_2 = discretized_instants_2[discretized_instants_2['weekday'] == week_day]['hour']
         if len(window_1) > 0 and len(window_2) > 0:
+            # Both have observations in this weekday
             distances += [wasserstein_distance(window_1, window_2)]
+        elif len(window_1) == 0 and len(window_2) == 0:
+            # Both have no observations in this weekday
+            distances += [0]
         else:
+            # Only one has observations in this weekday, penalize with max distance value
             distances += [23]  # 23 is the maximum EMD value for two histograms with values between 0 and 23.
     # Compute distance metric
     distance = mean(distances)
