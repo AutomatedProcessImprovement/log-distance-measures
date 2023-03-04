@@ -236,6 +236,32 @@ both of them.
 
 &nbsp;
 
+## Active Cases Over Time Distance
+
+Distance measure computing how different the histograms of the number of active cases (at start of each hour) of two event logs are.
+
+1. Build a timeline with a bin for each hour since the beginning to the end of both logs.
+2. Compute, for each bin, the number of cases active at the beginning of that hour (e.g. active cases at 01/01/2023 10:00:00).
+3. Compare the histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+
+### Example of use
+
+```python
+import pandas as pd
+
+from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_similarity_metrics.active_cases_over_time import active_cases_over_time_distance
+
+# Call passing the event logs, its column ID mappings, timestamp type, and discretize function
+active_cases_over_time_distance(
+    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    window_size=pd.Timedelta(hours=1)  # Bins of 1 hour
+)
+```
+
+&nbsp;
+
 ## Cycle Time Distribution Distance
 
 Distance measure computing how different the cycle time discretized histograms of two event logs are.
@@ -247,7 +273,7 @@ Distance measure computing how different the cycle time discretized histograms o
 ### Example of use
 
 ```python
-import datetime
+import pandas as pd
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
 from log_similarity_metrics.cycle_time_distribution import cycle_time_distribution_distance
@@ -255,6 +281,6 @@ from log_similarity_metrics.cycle_time_distribution import cycle_time_distributi
 distance = cycle_time_distribution_distance(
     event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    bin_size=datetime.timedelta(hours=1)  # Bins of 1 hour
+    bin_size=pd.Timedelta(hours=1)  # Bins of 1 hour
 )
 ```
