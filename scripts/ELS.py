@@ -15,7 +15,6 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pulp as pulp
-from dtw import dtw
 from jellyfish import damerau_levenshtein_distance
 from scipy.optimize import linear_sum_assignment
 from scipy.stats import wasserstein_distance, kstest
@@ -52,7 +51,6 @@ class DistanceMetric(enum.Enum):
 ##############################
 # - EARTH MOVER'S DISTANCE - #
 ##############################
-
 
 def earth_movers_distance(obs_1: list, obs_2: list, extra_mass: int = 1):
     """
@@ -154,7 +152,7 @@ def absolute_event_distribution_distance(
     discretized_instants_1, discretized_instants_2 = _discretize_for_absolute(event_log_1, event_log_2)
     # Compute distance metric
     if metric == DistanceMetric.EMD:
-        distance = earth_movers_distance(discretized_instants_1, discretized_instants_2)
+        distance = earth_movers_distance(discretized_instants_1, discretized_instants_2) / len(discretized_instants_1)
     elif metric == DistanceMetric.WASSERSTEIN:
         distance = wasserstein_distance(discretized_instants_1, discretized_instants_2)
     else:
@@ -225,9 +223,9 @@ def circadian_event_distribution_distance(
         if len(window_1) > 0 and len(window_2) > 0:
             # Both have observations in this weekday
             if metric == DistanceMetric.EMD:
-                distances += [earth_movers_distance(window_1, window_2)]
+                distances += [earth_movers_distance(window_1, window_2) / len(window_1)]
             elif metric == DistanceMetric.WASSERSTEIN:
-                distances += [wasserstein_distance(window_1, window_2) / 23]
+                distances += [wasserstein_distance(window_1, window_2)]
             else:
                 distances += [kstest(window_1, window_2)]
         elif len(window_1) == 0 and len(window_2) == 0:
@@ -237,15 +235,15 @@ def circadian_event_distribution_distance(
             elif metric == DistanceMetric.WASSERSTEIN:
                 distances += [0.0]
             else:
-                distances += [(1.0, 0.0)]
+                distances += [(0.0, 1.0)]
         else:
             # Only one has observations in this weekday, penalize with max distance value
             if metric == DistanceMetric.EMD:
-                distances += [(len(window_1) + len(window_2)) * 23]  # Num observations (total mass) multiplied by the number of bins
+                distances += [(len(window_1) + len(window_2))]  # Number of observations
             elif metric == DistanceMetric.WASSERSTEIN:
-                distances += [1.0]  # 1.0 is the maximum wasserstein value for two histograms with values between 0 and 23.
+                distances += [23.0]  # 23 is the maximum wasserstein value for two histograms with values between 0 and 23.
             else:
-                distances += [(0.0, 1.0)]
+                distances += [(1.0, 0.0)]
     # Compute distance metric
     if metric == DistanceMetric.KS:
         distance = (mean([distance[0] for distance in distances]), mean([distance[1] for distance in distances]))
@@ -316,7 +314,7 @@ def cycle_time_distribution_distance(
     discretized_durations_2 = [math.floor((trace_duration - min_duration) / bin_size) for trace_duration in trace_durations_2]
     # Compute distance metric
     if metric == DistanceMetric.EMD:
-        distance = earth_movers_distance(discretized_durations_1, discretized_durations_2)
+        distance = earth_movers_distance(discretized_durations_1, discretized_durations_2) / len(discretized_durations_1)
     elif metric == DistanceMetric.WASSERSTEIN:
         distance = wasserstein_distance(discretized_durations_1, discretized_durations_2)
     else:
@@ -359,7 +357,7 @@ def case_arrival_distribution_distance(
     ]
     # Compute distance metric
     if metric == DistanceMetric.EMD:
-        distance = earth_movers_distance(discretized_arrivals_1, discretized_arrivals_2)
+        distance = earth_movers_distance(discretized_arrivals_1, discretized_arrivals_2) / len(discretized_arrivals_1)
     elif metric == DistanceMetric.WASSERSTEIN:
         distance = wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
     else:
@@ -411,7 +409,7 @@ def relative_event_distribution_distance(
     relative_2 = _relativize_and_discretize(event_log_2, log_2_ids)
     # Compute distance metric
     if metric == DistanceMetric.EMD:
-        distance = earth_movers_distance(relative_1, relative_2)
+        distance = earth_movers_distance(relative_1, relative_2) / len(relative_1)
     elif metric == DistanceMetric.WASSERSTEIN:
         distance = wasserstein_distance(relative_1, relative_2)
     else:
@@ -429,8 +427,6 @@ def _relativize_and_discretize(
 
     :param event_log: event log.
     :param log_ids: mapping for the column IDs of the event log.
-    :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
-    :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
 
     :return: A list with the relative and discretized timestamps of the log.
     """
@@ -450,9 +446,114 @@ def _relativize_and_discretize(
     return discretized_instants
 
 
-#################################
-# - DIRECTLY-FOLLOWS DISTANCE - #
-#################################
+##############################
+# - ACTIVE CASES OVER TIME - #
+##############################
+
+def active_cases_over_time_distance(
+        event_log_1: pd.DataFrame,
+        event_log_2: pd.DataFrame,
+        metric: DistanceMetric = DistanceMetric.EMD
+) -> float:
+    """
+    EMD (or Wasserstein Distance) between the distribution of active cases over time. To get this distribution, the number of active cases
+    at the beginning of each window of size [window_size] (from the whole logs timespans) are computed.
+
+    :param event_log_1: first event log.
+    :param event_log_2: second event log.
+    :param metric: distance metric to use in the histogram comparison.
+
+    :return: the EMD between the distribution of active cases over time of the two event logs, measuring the amount of movements
+    (considering their distance) to transform one timestamp histogram into the other.
+    """
+    # Get timeline (reset to day in case daily frequency is used)
+    start = min(event_log_1[log_1_ids.start_time].min(), event_log_2[log_2_ids.start_time].min()).floor(freq='H')
+    end = max(event_log_1[log_1_ids.end_time].max(), event_log_2[log_2_ids.end_time].max()).ceil(freq='H')
+    # Get the number of cases in each hour
+    wip_1 = _active_cases_over_time(event_log_1, log_1_ids, start, end)
+    wip_2 = _active_cases_over_time(event_log_2, log_2_ids, start, end)
+    # Transform to 1D array
+    wip_1 = [element for i in range(len(wip_1)) for element in [i] * wip_1[i]]
+    wip_2 = [element for i in range(len(wip_2)) for element in [i] * wip_2[i]]
+    # Compute distance metric
+    if len(wip_1) > 0 and len(wip_2) > 0:
+        # Observations from both logs
+        if metric == DistanceMetric.EMD:
+            distance = earth_movers_distance(wip_1, wip_2) / len(wip_1)
+        elif metric == DistanceMetric.WASSERSTEIN:
+            distance = wasserstein_distance(wip_1, wip_2)
+        else:
+            distance = kstest(wip_1, wip_2)
+    elif len(wip_1) == 0 and len(wip_2) == 0:
+        if metric == DistanceMetric.EMD:
+            distance = 0.0
+        elif metric == DistanceMetric.WASSERSTEIN:
+            distance = 0.0
+        else:
+            distance = (0.0, 1.0)
+    else:
+        if metric == DistanceMetric.EMD:
+            distance = len(wip_1) + len(wip_2)  # Number of extra observations
+        elif metric == DistanceMetric.WASSERSTEIN:
+            distance = (start - end) / pd.Timedelta(hours=1)  # Number of bins
+        else:
+            distance = (1.0, 0.0)
+    # Return metric
+    return distance
+
+
+def _active_cases_over_time(
+        event_log: pd.DataFrame,
+        log_ids: EventLogIDs,
+        start: pd.Timestamp,
+        end: pd.Timestamp
+) -> list:
+    """
+    Compute the 2D array with the number of active cases at the beginning of each hour in [event_log], from [start] to [end]. Where the
+    index of each number in the list is the hour w.r.t. [start], and the value the number of active cases.
+
+    :param event_log: event log.
+    :param log_ids: mapping for the column IDs of the event log.
+    :param start: timestamp of the start of the time-series.
+    :param end: timestamp of the end of the time-series.
+
+    :return: a 2D array with the number of active cases at the beginning of each [window].
+    """
+    # Store the case starts/ends
+    timestamps, types = [], []
+    for _, case_events in event_log.groupby(log_ids.case):
+        timestamps += [case_events[log_ids.start_time].min(), case_events[log_ids.end_time].max()]
+        types += ["start", "end"]
+    # Add an event per start of each window
+    num_windows = math.ceil((end - start) / pd.Timedelta(hours=1)) + 1
+    timestamps += [start + (pd.Timedelta(hours=1) * offset) for offset in range(num_windows)]
+    types += ["reset"] * num_windows
+    # Create sorted list of dicts
+    events = pd.DataFrame(
+        {'time': timestamps, 'type': types}
+    ).sort_values(['time', 'type'], ascending=[True, False]).values.tolist()
+    # Go over them start->end counting the number of active cases at the beginning of each window
+    wip = []
+    i, active = 0, 0
+    while i < len(events):
+        if events[i][1] == "start":
+            # New case starting
+            active += 1
+        elif events[i][1] == "end":
+            # Case ending
+            active -= 1
+        else:
+            # New window, store active cases in this window
+            wip += [active]
+        # Continue with next event
+        i += 1
+    # Return the number of active cases over time
+    return wip
+
+
+#######################
+# - N-GRAM DISTANCE - #
+#######################
 
 def n_gram_distribution_distance(
         event_log_1: pd.DataFrame,
@@ -699,7 +800,8 @@ if __name__ == '__main__':
         outfile.write("case_arrival_emd,case_arrival_wass,case_arrival_ks_stat,case_arrival_ks_pv,")
         outfile.write("circadian_emd,circadian_wass,circadian_ks_stat,circadian_ks_pv,")
         outfile.write("relative_emd,relative_wass,relative_ks_stat,relative_ks_pv,")
-        outfile.write("cycle_time_emd,cycle_time_wass,cycle_time_ks_stat,cycle_time_ks_pv\n")
+        outfile.write("wip_emd,wip_wass,wip_ks_stat,wip_ks_pv,")
+        outfile.write("cycle_time_wass,cycle_time_ks_stat,cycle_time_ks_pv\n")
     for simulated_path in simulated_paths:
         # Read
         simulated_log = pd.read_csv(simulated_path)
@@ -755,10 +857,17 @@ if __name__ == '__main__':
         start = time.time()
         circadian_events_ks = circadian_event_distribution_distance(original_log, simulated_log, DistanceMetric.KS)
         print("Circadian Event Distribution KS: {} s".format(time.time() - start))
-        # CYCLE TIME
+        # Active Cases Over Time (WiP)
         start = time.time()
-        cycle_time_emd = cycle_time_distribution_distance(original_log, simulated_log, bin_size, DistanceMetric.EMD)
-        print("Cycle Time Distribution Distance: {} s".format(time.time() - start))
+        wip_emd = circadian_event_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
+        print("Active Cases Over Time (WiP) EMD: {} s".format(time.time() - start))
+        start = time.time()
+        wip_wass = circadian_event_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
+        print("Active Cases Over Time (WiP) Wasserstein: {} s".format(time.time() - start))
+        start = time.time()
+        wip_ks = circadian_event_distribution_distance(original_log, simulated_log, DistanceMetric.KS)
+        print("Active Cases Over Time (WiP) KS: {} s".format(time.time() - start))
+        # CYCLE TIME
         start = time.time()
         cycle_time_wass = cycle_time_distribution_distance(original_log, simulated_log, bin_size, DistanceMetric.WASSERSTEIN)
         print("Cycle Time Distribution Distance: {} s".format(time.time() - start))
@@ -776,4 +885,5 @@ if __name__ == '__main__':
             outfile.write(
                 "{},{},{},{},".format(circadian_events_emd, circadian_events_wass, circadian_events_ks[0], circadian_events_ks[1]))
             outfile.write("{},{},{},{},".format(relative_events_emd, relative_events_wass, relative_events_ks[0], relative_events_ks[1]))
-            outfile.write("{},{},{},{}\n".format(cycle_time_emd, cycle_time_wass, cycle_time_ks[0], cycle_time_ks[1]))
+            outfile.write("{},{},{},{},".format(wip_emd, wip_wass, wip_ks[0], wip_ks[1]))
+            outfile.write("{},{},{}\n".format(cycle_time_wass, cycle_time_ks[0], cycle_time_ks[1]))
