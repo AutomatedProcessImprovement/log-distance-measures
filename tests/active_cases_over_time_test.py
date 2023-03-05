@@ -50,8 +50,8 @@ def test__active_cases_over_time():
     event_log = _read_event_log("./tests/assets/test_event_log_4.csv")
     start = event_log[DEFAULT_CSV_IDS.start_time].min().floor(freq="H")
     end = event_log[DEFAULT_CSV_IDS.end_time].max().ceil(freq="H")
-    assert _active_cases_over_time(event_log, DEFAULT_CSV_IDS, start, end) == [0, 3, 5, 4, 2, 0]
+    assert _active_cases_over_time(event_log, DEFAULT_CSV_IDS, start, end) == [0, 2, 5, 8, 5, 2, 0]
     event_log = _read_event_log("./tests/assets/test_event_log_8.csv")
     start = event_log[DEFAULT_CSV_IDS.start_time].min().floor(freq="H")
     end = event_log[DEFAULT_CSV_IDS.end_time].max().ceil(freq="H")
-    assert _active_cases_over_time(event_log, DEFAULT_CSV_IDS, start, end) == [0, 2, 3, 2, 4, 2, 2, 0]
+    assert _active_cases_over_time(event_log, DEFAULT_CSV_IDS, start, end) == [0, 1, 3, 5, 5, 5, 2, 2, 0]

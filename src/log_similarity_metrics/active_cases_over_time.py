@@ -79,25 +79,27 @@ def _active_cases_over_time(
         types += ["start", "end"]
     # Add an event per start of each window
     num_windows = math.ceil((end - start) / window_size) + 1
-    timestamps += [start + (window_size * offset) for offset in range(num_windows)]
-    types += ["reset"] * num_windows
+    timestamps += [start + (window_size * offset) for offset in range(num_windows + 1)]
+    types += ["window"] * (num_windows + 1)
     # Create sorted list of dicts
     events = pd.DataFrame(
         {'time': timestamps, 'type': types}
     ).sort_values(['time', 'type'], ascending=[True, False]).values.tolist()
     # Go over them start->end counting the number of active cases at the beginning of each window
     wip = []
-    i, active = 0, 0
+    i, active, active_current_window = 0, 0, 0
     while i < len(events):
         if events[i][1] == "start":
             # New case starting
             active += 1
+            active_current_window += 1
         elif events[i][1] == "end":
             # Case ending
             active -= 1
         else:
             # New window, store active cases in this window
-            wip += [active]
+            wip += [active_current_window]
+            active_current_window = active
         # Continue with next event
         i += 1
     # Return the number of active cases over time
