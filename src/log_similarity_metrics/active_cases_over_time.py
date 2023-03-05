@@ -48,7 +48,7 @@ def active_cases_over_time_distance(
     elif len(wip_1) == 0 and len(wip_2) == 0:
         distance = 0
     else:
-        distance = (start - end) / window_size
+        distance = math.ceil((start - end) / window_size)
     # Return metric
     return distance
 

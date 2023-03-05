@@ -71,8 +71,8 @@ def test_circadian_event_distribution_distance_different_logs():
 
 def test_circadian_event_distribution_distance_non_overlapping_logs():
     # Read event logs with timestamps in different days (non overlapping)
-    event_log_1 = _read_event_log("./assets/test_event_log_1.csv")
-    event_log_2 = _read_event_log("./assets/test_event_log_7.csv")
+    event_log_1 = _read_event_log("./tests/assets/test_event_log_1.csv")
+    event_log_2 = _read_event_log("./tests/assets/test_event_log_7.csv")
     # Normalized distance should be 6/7 as one log is Mon-Wed and the other Thu-Sat (only Sunday 0 distance)
     assert circadian_event_distribution_distance(
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, AbsoluteTimestampType.BOTH
