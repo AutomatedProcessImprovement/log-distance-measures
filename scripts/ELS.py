@@ -495,7 +495,7 @@ def active_cases_over_time_distance(
         if metric == DistanceMetric.EMD:
             distance = len(wip_1) + len(wip_2)  # Number of extra observations
         elif metric == DistanceMetric.WASSERSTEIN:
-            distance = (start - end) / pd.Timedelta(hours=1)  # Number of bins
+            distance = math.ceil((start - end) / pd.Timedelta(hours=1))  # Number of bins
         else:
             distance = (1.0, 0.0)
     # Return metric
