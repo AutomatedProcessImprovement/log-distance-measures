@@ -454,7 +454,7 @@ def active_cases_over_time_distance(
         event_log_1: pd.DataFrame,
         event_log_2: pd.DataFrame,
         metric: DistanceMetric = DistanceMetric.EMD
-) -> float:
+) -> float | Tuple[float, float]:
     """
     EMD (or Wasserstein Distance) between the distribution of active cases over time. To get this distribution, the number of active cases
     at the beginning of each window of size [window_size] (from the whole logs timespans) are computed.
@@ -795,7 +795,7 @@ if __name__ == '__main__':
     # Compute metrics for each simulated log
     with open("output.csv", 'a') as outfile:
         outfile.write("name,")
-        outfile.write("ngram,")
+        outfile.write("bigram,trigram,")
         if args.cfld:
             outfile.write("cfld,")
         outfile.write("absolute_emd,absolute_wass,absolute_ks_stat,absolute_ks_pv,")
@@ -812,8 +812,11 @@ if __name__ == '__main__':
         # Measures
         # NGRAM
         start = time.time()
-        ngram = n_gram_distribution_distance(original_log, simulated_log)
-        print("N-Gram Distribution Distance: {} s".format(time.time() - start))
+        bigram = n_gram_distribution_distance(original_log, simulated_log, n=2)
+        print("2-Gram Distribution Distance: {} s".format(time.time() - start))
+        start = time.time()
+        trigram = n_gram_distribution_distance(original_log, simulated_log, n=3)
+        print("3-Gram Distribution Distance: {} s".format(time.time() - start))
         # CFLD
         if args.cfld:
             start = time.time()
@@ -879,7 +882,7 @@ if __name__ == '__main__':
         # Print
         with open("output.csv", 'a') as outfile:
             outfile.write("{},".format(simulated_path))
-            outfile.write("{},".format(ngram))
+            outfile.write("{},{},".format(bigram, trigram))
             if args.cfld:
                 outfile.write("{},".format(cfld))
             outfile.write("{},{},{},{},".format(absolute_events_emd, absolute_events_wass, absolute_events_ks[0], absolute_events_ks[1]))
