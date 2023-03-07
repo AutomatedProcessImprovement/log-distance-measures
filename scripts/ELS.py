@@ -10,7 +10,7 @@ from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from statistics import mean
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -52,14 +52,15 @@ class DistanceMetric(enum.Enum):
 # - EARTH MOVER'S DISTANCE - #
 ##############################
 
-def earth_movers_distance(obs_1: list, obs_2: list, extra_mass: int = 1):
+
+def earth_movers_distance(obs_1: Union[list, dict], obs_2: Union[list, dict], extra_mass: int = 1):
     """
     Compute the Earth Mover's Distance (EMD) between two histograms given the 1D array of observations. The EMD corresponds to the amount of
     observations that have to be moved (multiplied by the distance of the movement) to transform one histogram into the other. If one of the
     histograms has more observations than the other, each extra observation is penalized by [extra_mass].
 
-    :param obs_1: 1D array with the observations of histogram 1.
-    :param obs_2: 1D array with the observations of histogram 2.
+    :param obs_1: list with a 1D array with the observations of histogram 1, or dict with each bin and the number of observations.
+    :param obs_2: list with a 1D array with the observations of histogram 2, or dict with each bin and the number of observations.
     :param extra_mass: Penalization for extra observation.
     :return: The Earth Mover's Distance (EMD) between [hist_1] and [hist_2].
     """
@@ -100,18 +101,19 @@ def earth_movers_distance(obs_1: list, obs_2: list, extra_mass: int = 1):
     return distance
 
 
-def _clean_histograms(obs_1: list, obs_2: list) -> Tuple[dict, dict]:
+def _clean_histograms(obs_1: Union[list, dict], obs_2: Union[list, dict]) -> Tuple[dict, dict]:
     """
-    Transform two 1-D histograms (list of observations) to two 2-D histograms without the observations that they have in common.
+    Transform two histograms (either 1-D list of observations or dictionary with 2-D) to two 2-D histograms without the observations that
+    they have in common.
 
-    :param obs_1: 1-D histogram 1.
-    :param obs_2: 1-D histogram 2.
+    :param obs_1: list with the 1-D histogram 1, or dict with the 2-D histogram 1.
+    :param obs_2: list with the 1-D histogram 2, or dict with the 2-D histogram 2.
 
     :return: both histograms in 2-D space, without the common observations.
     """
     # Transform to 2-D histograms
-    hist_1 = Counter(obs_1)
-    hist_2 = Counter(obs_2)
+    hist_1 = Counter(obs_1) if type(obs_1) is list else obs_1
+    hist_2 = Counter(obs_2) if type(obs_2) is list else obs_2
     # Parse [hist_1] subtracting the mass that is already in [clean_hist_2]
     clean_hist_1 = {}
     for i in hist_1:
@@ -450,14 +452,15 @@ def _relativize_and_discretize(
 # - ACTIVE CASES OVER TIME - #
 ##############################
 
-def active_cases_over_time_distance(
+def work_in_progress_distance(
         event_log_1: pd.DataFrame,
-        event_log_2: pd.DataFrame,
-        metric: DistanceMetric = DistanceMetric.EMD
-) -> float | Tuple[float, float]:
+        event_log_2: pd.DataFrame
+) -> float:
     """
-    EMD (or Wasserstein Distance) between the distribution of active cases over time. To get this distribution, the number of active cases
-    at the beginning of each window of size [window_size] (from the whole logs timespans) are computed.
+    EMD (or Wasserstein Distance) between the distribution of active cases over time. To get this distribution, the percentage of each
+    window that is covered by active cases is computed. For example, given the window from 10am to 11am, if there are three cases active
+    during the whole window (1 + 1 + 1), one case active half of the window (0.5), and two cases active a quarter of the window (0.25 +
+    0.25), the active value for that hour is 4.
 
     :param event_log_1: first event log.
     :param event_log_2: second event log.
@@ -469,87 +472,57 @@ def active_cases_over_time_distance(
     # Get timeline (reset to day in case daily frequency is used)
     start = min(event_log_1[log_1_ids.start_time].min(), event_log_2[log_2_ids.start_time].min()).floor(freq='H')
     end = max(event_log_1[log_1_ids.end_time].max(), event_log_2[log_2_ids.end_time].max()).ceil(freq='H')
-    # Get the number of cases in each hour
-    wip_1 = _active_cases_over_time(event_log_1, log_1_ids, start, end)
-    wip_2 = _active_cases_over_time(event_log_2, log_2_ids, start, end)
-    # Transform to 1D array
-    wip_1 = [element for i in range(len(wip_1)) for element in [i] * wip_1[i]]
-    wip_2 = [element for i in range(len(wip_2)) for element in [i] * wip_2[i]]
-    # Compute distance metric
-    if len(wip_1) > 0 and len(wip_2) > 0:
-        # Observations from both logs
-        if metric == DistanceMetric.EMD:
-            distance = earth_movers_distance(wip_1, wip_2) / len(wip_1)
-        elif metric == DistanceMetric.WASSERSTEIN:
-            distance = wasserstein_distance(wip_1, wip_2)
-        else:
-            distance = kstest(wip_1, wip_2)
-    elif len(wip_1) == 0 and len(wip_2) == 0:
-        if metric == DistanceMetric.EMD:
-            distance = 0.0
-        elif metric == DistanceMetric.WASSERSTEIN:
-            distance = 0.0
-        else:
-            distance = (0.0, 1.0)
-    else:
-        if metric == DistanceMetric.EMD:
-            distance = len(wip_1) + len(wip_2)  # Number of extra observations
-        elif metric == DistanceMetric.WASSERSTEIN:
-            distance = math.ceil((start - end) / pd.Timedelta(hours=1))  # Number of bins
-        else:
-            distance = (1.0, 0.0)
+    # Compute the active area of each bin
+    wip_1 = _compute_work_in_progress(event_log_1, log_1_ids, start, end, pd.Timedelta(hours=1))
+    wip_2 = _compute_work_in_progress(event_log_2, log_2_ids, start, end, pd.Timedelta(hours=1))
+    # Compute SAE over the histograms
+    distance = sum([
+        abs(wip_1.get(key, 0) - wip_2.get(key, 0))
+        for key
+        in set(list(wip_1.keys()) + list(wip_2.keys()))
+    ]) / (sum(wip_1.values()) + sum(wip_2.values()))
     # Return metric
     return distance
 
 
-def _active_cases_over_time(
+def _compute_work_in_progress(
         event_log: pd.DataFrame,
         log_ids: EventLogIDs,
         start: pd.Timestamp,
-        end: pd.Timestamp
-) -> list:
+        end: pd.Timestamp,
+        window_size: pd.Timedelta
+) -> dict:
     """
-    Compute the 2D array with the number of active cases at the beginning of each hour in [event_log], from [start] to [end]. Where the
-    index of each number in the list is the hour w.r.t. [start], and the value the number of active cases.
+    Compute, for each bin of [window_size] size within the interval from [start] to [end], the percentage of "area" where there was an
+    active case. For example, given the window from 10am to 11am, if there are three cases active during the whole window (1 + 1 + 1),
+    one case active half of the window (0.5), and two cases active a quarter of the window (0.25 + 0.25), the active value for that hour
+    is 4.
 
-    :param event_log: event log.
-    :param log_ids: mapping for the column IDs of the event log.
-    :param start: timestamp of the start of the time-series.
-    :param end: timestamp of the end of the time-series.
+    :param event_log: first event log.
+    :param log_ids: mapping for the column IDs of the first event log.
+    :param start: timestamp denoting the start of the interval to search in.
+    :param end: timestamp denoting the end of the interval to search in.
+    :param window_size: window to check the number of cases at the beginning of it.
 
-    :return: a 2D array with the number of active cases at the beginning of each [window].
+    :return: a dict with the ID of each window and the work in progress in it.
     """
-    # Store the case starts/ends
-    timestamps, types = [], []
-    for _, case_events in event_log.groupby(log_ids.case):
-        timestamps += [case_events[log_ids.start_time].min(), case_events[log_ids.end_time].max()]
-        types += ["start", "end"]
-    # Add an event per start of each window
-    num_windows = math.ceil((end - start) / pd.Timedelta(hours=1)) + 1
-    timestamps += [start + (pd.Timedelta(hours=1) * offset) for offset in range(num_windows + 1)]
-    types += ["window"] * (num_windows + 1)
-    # Create sorted list of dicts
-    events = pd.DataFrame(
-        {'time': timestamps, 'type': types}
-    ).sort_values(['time', 'type'], ascending=[True, False]).values.tolist()
-    # Go over them start->end counting the number of active cases at the beginning of each window
-    wip = []
-    i, active, active_current_window = 0, 0, 0
-    while i < len(events):
-        if events[i][1] == "start":
-            # New case starting
-            active += 1
-            active_current_window += 1
-        elif events[i][1] == "end":
-            # Case ending
-            active -= 1
-        else:
-            # New window, store active cases in this window
-            wip += [active_current_window]
-            active_current_window = active
-        # Continue with next event
-        i += 1
-    # Return the number of active cases over time
+    # Transform event logs to cases
+    cases = []
+    for _case_id, events in event_log.groupby(log_ids.case):
+        cases += [{'start': events[log_ids.start_time].min(), 'end': events[log_ids.end_time].max()}]
+    cases = pd.DataFrame(cases)
+    # Go over each bin computing the active area
+    wip = {}
+    for offset in range(math.ceil((end - start) / window_size)):
+        current_window_start = start + window_size * offset
+        current_window_end = current_window_start + window_size
+        # Compute overlapping intervals (0s if no overlapping)
+        within_window = (np.minimum(cases['end'], current_window_end) - np.maximum(cases['start'], current_window_start))
+        # Sum positive ones (within the current window) and normalize area
+        wip_value = sum(within_window[within_window > pd.Timedelta(0)], pd.Timedelta(0)) / window_size
+        if wip_value > 0:
+            wip[offset] = wip_value
+    # Return WiP dict
     return wip
 
 
@@ -802,7 +775,7 @@ if __name__ == '__main__':
         outfile.write("case_arrival_emd,case_arrival_wass,case_arrival_ks_stat,case_arrival_ks_pv,")
         outfile.write("circadian_emd,circadian_wass,circadian_ks_stat,circadian_ks_pv,")
         outfile.write("relative_emd,relative_wass,relative_ks_stat,relative_ks_pv,")
-        outfile.write("wip_emd,wip_wass,wip_ks_stat,wip_ks_pv,")
+        outfile.write("wip,")
         outfile.write("cycle_time_wass,cycle_time_ks_stat,cycle_time_ks_pv\n")
     for simulated_path in simulated_paths:
         # Read
@@ -864,14 +837,8 @@ if __name__ == '__main__':
         print("Circadian Event Distribution KS: {} s".format(time.time() - start))
         # Active Cases Over Time (WiP)
         start = time.time()
-        wip_emd = active_cases_over_time_distance(original_log, simulated_log, DistanceMetric.EMD)
-        print("Active Cases Over Time (WiP) EMD: {} s".format(time.time() - start))
-        start = time.time()
-        wip_wass = active_cases_over_time_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
-        print("Active Cases Over Time (WiP) Wasserstein: {} s".format(time.time() - start))
-        start = time.time()
-        wip_ks = active_cases_over_time_distance(original_log, simulated_log, DistanceMetric.KS)
-        print("Active Cases Over Time (WiP) KS: {} s".format(time.time() - start))
+        wip = work_in_progress_distance(original_log, simulated_log)
+        print("Active Cases Over Time (WiP): {} s".format(time.time() - start))
         # CYCLE TIME
         start = time.time()
         cycle_time_wass = cycle_time_distribution_distance(original_log, simulated_log, bin_size, DistanceMetric.WASSERSTEIN)
@@ -890,5 +857,5 @@ if __name__ == '__main__':
             outfile.write(
                 "{},{},{},{},".format(circadian_events_emd, circadian_events_wass, circadian_events_ks[0], circadian_events_ks[1]))
             outfile.write("{},{},{},{},".format(relative_events_emd, relative_events_wass, relative_events_ks[0], relative_events_ks[1]))
-            outfile.write("{},{},{},{},".format(wip_emd, wip_wass, wip_ks[0], wip_ks[1]))
+            outfile.write("{},".format(wip))
             outfile.write("{},{},{}\n".format(cycle_time_wass, cycle_time_ks[0], cycle_time_ks[1]))
