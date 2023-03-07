@@ -1,18 +1,18 @@
 from collections import Counter
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pulp as pulp
 
 
-def earth_movers_distance(obs_1: list, obs_2: list, extra_mass: int = 1):
+def earth_movers_distance(obs_1: Union[list, dict], obs_2: Union[list, dict], extra_mass: int = 1):
     """
     Compute the Earth Mover's Distance (EMD) between two histograms given the 1D array of observations. The EMD corresponds to the amount of
     observations that have to be moved (multiplied by the distance of the movement) to transform one histogram into the other. If one of the
     histograms has more observations than the other, each extra observation is penalized by [extra_mass].
 
-    :param obs_1: 1D array with the observations of histogram 1.
-    :param obs_2: 1D array with the observations of histogram 2.
+    :param obs_1: list with a 1D array with the observations of histogram 1, or dict with each bin and the number of observations.
+    :param obs_2: list with a 1D array with the observations of histogram 2, or dict with each bin and the number of observations.
     :param extra_mass: Penalization for extra observation.
     :return: The Earth Mover's Distance (EMD) between [hist_1] and [hist_2].
     """
@@ -41,7 +41,9 @@ def earth_movers_distance(obs_1: list, obs_2: list, extra_mass: int = 1):
         # Constraint: minimize the total cost of the movements
         model += pulp.lpSum([c[i][j] * x[(i, j)] for i in range(len_1) for j in range(len_2)])
         # Solve problem
+        pulp.LpSolverDefault.msg = 0
         model.solve()
+        pulp.LpSolverDefault.msg = 1
         # Return mass + penalization for the extra mass that was not moved
         distance = pulp.value(model.objective) + abs(total_mass_1 - total_mass_2) * extra_mass
     else:
@@ -51,18 +53,19 @@ def earth_movers_distance(obs_1: list, obs_2: list, extra_mass: int = 1):
     return distance
 
 
-def _clean_histograms(obs_1: list, obs_2: list) -> Tuple[dict, dict]:
+def _clean_histograms(obs_1: Union[list, dict], obs_2: Union[list, dict]) -> Tuple[dict, dict]:
     """
-    Transform two 1-D histograms (list of observations) to two 2-D histograms without the observations that they have in common.
+    Transform two histograms (either 1-D list of observations or dictionary with 2-D) to two 2-D histograms without the observations that
+    they have in common.
 
-    :param obs_1: 1-D histogram 1.
-    :param obs_2: 1-D histogram 2.
+    :param obs_1: list with the 1-D histogram 1, or dict with the 2-D histogram 1.
+    :param obs_2: list with the 1-D histogram 2, or dict with the 2-D histogram 2.
 
     :return: both histograms in 2-D space, without the common observations.
     """
     # Transform to 2-D histograms
-    hist_1 = Counter(obs_1)
-    hist_2 = Counter(obs_2)
+    hist_1 = Counter(obs_1) if type(obs_1) is list else obs_1
+    hist_2 = Counter(obs_2) if type(obs_2) is list else obs_2
     # Parse [hist_1] subtracting the mass that is already in [clean_hist_2]
     clean_hist_1 = {}
     for i in hist_1:
