@@ -17,7 +17,7 @@ import pandas as pd
 import pulp as pulp
 from jellyfish import damerau_levenshtein_distance
 from scipy.optimize import linear_sum_assignment
-from scipy.stats import wasserstein_distance, kstest
+from scipy.stats import wasserstein_distance
 
 
 @dataclass
@@ -45,7 +45,6 @@ log_2_ids = EventLogIDs(
 class DistanceMetric(enum.Enum):
     EMD = 0
     WASSERSTEIN = 1
-    KS = 2
 
 
 ##############################
@@ -155,10 +154,8 @@ def absolute_event_distribution_distance(
     # Compute distance metric
     if metric == DistanceMetric.EMD:
         distance = earth_movers_distance(discretized_instants_1, discretized_instants_2) / len(discretized_instants_1)
-    elif metric == DistanceMetric.WASSERSTEIN:
-        distance = wasserstein_distance(discretized_instants_1, discretized_instants_2)
     else:
-        distance = kstest(discretized_instants_1, discretized_instants_2)
+        distance = wasserstein_distance(discretized_instants_1, discretized_instants_2)
     # Return metric
     return distance
 
@@ -226,31 +223,19 @@ def circadian_event_distribution_distance(
             # Both have observations in this weekday
             if metric == DistanceMetric.EMD:
                 distances += [earth_movers_distance(window_1, window_2) / len(window_1)]
-            elif metric == DistanceMetric.WASSERSTEIN:
-                distances += [wasserstein_distance(window_1, window_2)]
             else:
-                distances += [kstest(window_1, window_2)]
+                distances += [wasserstein_distance(window_1, window_2)]
         elif len(window_1) == 0 and len(window_2) == 0:
             # Both have no observations in this weekday
-            if metric == DistanceMetric.EMD:
-                distances += [0.0]
-            elif metric == DistanceMetric.WASSERSTEIN:
-                distances += [0.0]
-            else:
-                distances += [(0.0, 1.0)]
+            distances += [0.0]
         else:
             # Only one has observations in this weekday, penalize with max distance value
             if metric == DistanceMetric.EMD:
                 distances += [(len(window_1) + len(window_2))]  # Number of observations
-            elif metric == DistanceMetric.WASSERSTEIN:
-                distances += [23.0]  # 23 is the maximum wasserstein value for two histograms with values between 0 and 23.
             else:
-                distances += [(1.0, 0.0)]
+                distances += [23.0]  # 23 is the maximum wasserstein value for two histograms with values between 0 and 23.
     # Compute distance metric
-    if metric == DistanceMetric.KS:
-        distance = (mean([distance[0] for distance in distances]), mean([distance[1] for distance in distances]))
-    else:
-        distance = mean(distances)
+    distance = mean(distances)
     # Return metric
     return distance
 
@@ -317,10 +302,8 @@ def cycle_time_distribution_distance(
     # Compute distance metric
     if metric == DistanceMetric.EMD:
         distance = earth_movers_distance(discretized_durations_1, discretized_durations_2) / len(discretized_durations_1)
-    elif metric == DistanceMetric.WASSERSTEIN:
-        distance = wasserstein_distance(discretized_durations_1, discretized_durations_2)
     else:
-        distance = kstest(discretized_durations_1, discretized_durations_2)
+        distance = wasserstein_distance(discretized_durations_1, discretized_durations_2)
     # Return metric
     return distance
 
@@ -360,10 +343,8 @@ def case_arrival_distribution_distance(
     # Compute distance metric
     if metric == DistanceMetric.EMD:
         distance = earth_movers_distance(discretized_arrivals_1, discretized_arrivals_2) / len(discretized_arrivals_1)
-    elif metric == DistanceMetric.WASSERSTEIN:
-        distance = wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
     else:
-        distance = kstest(discretized_arrivals_1, discretized_arrivals_2)
+        distance = wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
     # Return metric
     return distance
 
@@ -412,10 +393,8 @@ def relative_event_distribution_distance(
     # Compute distance metric
     if metric == DistanceMetric.EMD:
         distance = earth_movers_distance(relative_1, relative_2) / len(relative_1)
-    elif metric == DistanceMetric.WASSERSTEIN:
-        distance = wasserstein_distance(relative_1, relative_2)
     else:
-        distance = kstest(relative_1, relative_2)
+        distance = wasserstein_distance(relative_1, relative_2)
     return distance
 
 
