@@ -768,15 +768,15 @@ if __name__ == '__main__':
     # Compute metrics for each simulated log
     with open("output.csv", 'a') as outfile:
         outfile.write("name,")
-        outfile.write("bigram,trigram,")
+        outfile.write("bigram,bigram_runtime,trigram,trigram_runtime,")
         if args.cfld:
-            outfile.write("cfld,")
-        outfile.write("absolute_emd,absolute_wass,absolute_ks_stat,absolute_ks_pv,")
-        outfile.write("case_arrival_emd,case_arrival_wass,case_arrival_ks_stat,case_arrival_ks_pv,")
-        outfile.write("circadian_emd,circadian_wass,circadian_ks_stat,circadian_ks_pv,")
-        outfile.write("relative_emd,relative_wass,relative_ks_stat,relative_ks_pv,")
-        outfile.write("wip,")
-        outfile.write("cycle_time_wass,cycle_time_ks_stat,cycle_time_ks_pv\n")
+            outfile.write("cfld,cfld_runtime,")
+        outfile.write("absolute_emd,absolute_emd_runtime,absolute_wass,absolute_wass_runtime,")
+        outfile.write("case_arrival_emd,case_arrival_emd_runtime,case_arrival_wass,case_arrival_wass_runtime,")
+        outfile.write("circadian_emd,circadian_emd_runtime,circadian_wass,circadian_wass_runtime,")
+        outfile.write("relative_emd,relative_emd_runtime,relative_wass,relative_wass_runtime,")
+        outfile.write("wip,wip_runtime,")
+        outfile.write("cycle_time_wass,cycle_time_wass_runtime\n")
     for simulated_path in simulated_paths:
         # Read
         simulated_log = pd.read_csv(simulated_path)
@@ -786,76 +786,109 @@ if __name__ == '__main__':
         # NGRAM
         start = time.time()
         bigram = n_gram_distribution_distance(original_log, simulated_log, n=2)
-        print("2-Gram Distribution Distance: {} s".format(time.time() - start))
+        bigram_runtime = time.time() - start
+        print("2-Gram Distribution Distance: {} s".format(bigram_runtime))
         start = time.time()
         trigram = n_gram_distribution_distance(original_log, simulated_log, n=3)
-        print("3-Gram Distribution Distance: {} s".format(time.time() - start))
+        trigram_runtime = time.time() - start
+        print("3-Gram Distribution Distance: {} s".format(trigram_runtime))
         # CFLD
         if args.cfld:
             start = time.time()
             cfld = control_flow_log_distance(original_log, simulated_log)
-            print("Control-Flow Log Distance: {} s".format(time.time() - start))
-        # ARRIVALS
-        start = time.time()
-        arrivals_emd = case_arrival_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
-        print("Case Arrival Distribution EMD: {} s".format(time.time() - start))
-        start = time.time()
-        arrivals_wass = case_arrival_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
-        print("Case Arrival Distribution Wasserstein: {} s".format(time.time() - start))
-        start = time.time()
-        arrivals_ks = case_arrival_distribution_distance(original_log, simulated_log, DistanceMetric.KS)
-        print("Case Arrival Distribution KS: {} s".format(time.time() - start))
+            cfld_runtime = time.time() - start
+            print("Control-Flow Log Distance: {} s".format(cfld_runtime))
         # ABSOLUTE
         start = time.time()
         absolute_events_emd = absolute_event_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
-        print("Absolute Event Distribution EMD: {} s".format(time.time() - start))
+        absolute_events_emd_runtime = time.time() - start
+        print("Absolute Event Distribution EMD: {} s".format(absolute_events_emd_runtime))
         start = time.time()
         absolute_events_wass = absolute_event_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
-        print("Absolute Event Distribution Wasserstein: {} s".format(time.time() - start))
+        absolute_events_wass_runtime = time.time() - start
+        print("Absolute Event Distribution Wasserstein: {} s".format(absolute_events_wass_runtime))
+        # ARRIVALS
         start = time.time()
-        absolute_events_ks = absolute_event_distribution_distance(original_log, simulated_log, DistanceMetric.KS)
-        print("Absolute Event Distribution KS: {} s".format(time.time() - start))
-        # RELATIVE
+        arrivals_emd = case_arrival_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
+        arrivals_emd_runtime = time.time() - start
+        print("Case Arrival Distribution EMD: {} s".format(arrivals_emd_runtime))
         start = time.time()
-        relative_events_emd = relative_event_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
-        print("Relative Event Distribution EMD: {} s".format(time.time() - start))
-        start = time.time()
-        relative_events_wass = relative_event_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
-        print("Relative Event Distribution Wasserstein: {} s".format(time.time() - start))
-        start = time.time()
-        relative_events_ks = relative_event_distribution_distance(original_log, simulated_log, DistanceMetric.KS)
-        print("Relative Event Distribution KS: {} s".format(time.time() - start))
+        arrivals_wass = case_arrival_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
+        arrivals_wass_runtime = time.time() - start
+        print("Case Arrival Distribution Wasserstein: {} s".format(arrivals_wass_runtime))
         # CIRCADIAN
         start = time.time()
         circadian_events_emd = circadian_event_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
-        print("Circadian Event Distribution EMD: {} s".format(time.time() - start))
+        circadian_events_emd_runtime = time.time() - start
+        print("Circadian Event Distribution EMD: {} s".format(circadian_events_emd_runtime))
         start = time.time()
         circadian_events_wass = circadian_event_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
-        print("Circadian Event Distribution Wasserstein: {} s".format(time.time() - start))
+        circadian_events_wass_runtime = time.time() - start
+        print("Circadian Event Distribution Wasserstein: {} s".format(circadian_events_wass_runtime))
+        # RELATIVE
         start = time.time()
-        circadian_events_ks = circadian_event_distribution_distance(original_log, simulated_log, DistanceMetric.KS)
-        print("Circadian Event Distribution KS: {} s".format(time.time() - start))
+        relative_events_emd = relative_event_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
+        relative_events_emd_runtime = time.time() - start
+        print("Relative Event Distribution EMD: {} s".format(relative_events_emd_runtime))
+        start = time.time()
+        relative_events_wass = relative_event_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
+        relative_events_wass_runtime = time.time() - start
+        print("Relative Event Distribution Wasserstein: {} s".format(relative_events_wass_runtime))
         # Active Cases Over Time (WiP)
         start = time.time()
         wip = work_in_progress_distance(original_log, simulated_log)
-        print("Active Cases Over Time (WiP): {} s".format(time.time() - start))
+        wip_runtime = time.time() - start
+        print("Active Cases Over Time (WiP): {} s".format(wip_runtime))
         # CYCLE TIME
         start = time.time()
         cycle_time_wass = cycle_time_distribution_distance(original_log, simulated_log, bin_size, DistanceMetric.WASSERSTEIN)
-        print("Cycle Time Distribution Distance: {} s".format(time.time() - start))
-        start = time.time()
-        cycle_time_ks = cycle_time_distribution_distance(original_log, simulated_log, bin_size, DistanceMetric.KS)
-        print("Cycle Time Distribution Distance: {} s".format(time.time() - start))
+        cycle_time_wass_runtime = time.time() - start
+        print("Cycle Time Distribution Distance: {} s".format(cycle_time_wass_runtime))
         # Print
         with open("output.csv", 'a') as outfile:
-            outfile.write("{},".format(simulated_path))
-            outfile.write("{},{},".format(bigram, trigram))
+            outfile.write("{},".format(
+                simulated_path
+            ))
+            outfile.write("{},{},{},{},".format(
+                bigram,
+                bigram_runtime,
+                trigram,
+                trigram_runtime
+            ))
             if args.cfld:
-                outfile.write("{},".format(cfld))
-            outfile.write("{},{},{},{},".format(absolute_events_emd, absolute_events_wass, absolute_events_ks[0], absolute_events_ks[1]))
-            outfile.write("{},{},{},{},".format(arrivals_emd, arrivals_wass, arrivals_ks[0], arrivals_ks[1]))
-            outfile.write(
-                "{},{},{},{},".format(circadian_events_emd, circadian_events_wass, circadian_events_ks[0], circadian_events_ks[1]))
-            outfile.write("{},{},{},{},".format(relative_events_emd, relative_events_wass, relative_events_ks[0], relative_events_ks[1]))
-            outfile.write("{},".format(wip))
-            outfile.write("{},{},{}\n".format(cycle_time_wass, cycle_time_ks[0], cycle_time_ks[1]))
+                outfile.write("{},{},".format(
+                    cfld,
+                    cfld_runtime
+                ))
+            outfile.write("{},{},{},{},".format(
+                absolute_events_emd,
+                absolute_events_emd_runtime,
+                absolute_events_wass,
+                absolute_events_wass_runtime
+            ))
+            outfile.write("{},{},{},{},".format(
+                arrivals_emd,
+                arrivals_emd_runtime,
+                arrivals_wass,
+                arrivals_wass_runtime
+            ))
+            outfile.write("{},{},{},{},".format(
+                circadian_events_emd,
+                circadian_events_emd_runtime,
+                circadian_events_wass,
+                circadian_events_wass_runtime
+            ))
+            outfile.write("{},{},{},{},".format(
+                relative_events_emd,
+                relative_events_emd_runtime,
+                relative_events_wass,
+                relative_events_wass_runtime
+            ))
+            outfile.write("{},{},".format(
+                wip,
+                wip_runtime
+            ))
+            outfile.write("{},{}\n".format(
+                cycle_time_wass,
+                cycle_time_wass_runtime
+            ))
