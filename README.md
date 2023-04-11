@@ -1,7 +1,7 @@
-# Event Log Distance Metrics
+# Event Log Distance Measures
 
-Python package with the implementation of different metrics to measure the distance between two event logs, from the control-flow
-perspective, temporal perspective, or both:
+Python package with the implementation of different distance measures between two event logs, from the control-flow, temporal, and queuing
+perspectives:
 
 - Control-flow
     - N-Gram Distribution Distance
@@ -39,7 +39,7 @@ event_log[event_log_ids.end_time] = pd.to_datetime(event_log[event_log_ids.end_t
 
 Distance measure between two event logs with the same number of traces (_L1_ and _L2_) comparing the control-flow dimension (see "Camargo
 M, Dumas M, González-Rojas O. 2021. Discovering generative models from event logs: data-driven simulation vs deep learning. PeerJ Computer
-Science 7:e577 https://doi.org/10.7717/peerj-cs.577" for a detailed description of a similarity version of this metric).
+Science 7:e577 https://doi.org/10.7717/peerj-cs.577" for a detailed description of a similarity version of this measure).
 
 1. Transform each process trace of _L1_ and _L2_ to their corresponding activity sequence.
 2. Compute the Damerau-Levenshtein distance between each trace _i_ from _L1_ and each trace _j_ of _L2_, and normalize it by dividing by the
@@ -115,7 +115,7 @@ distance = absolute_event_distribution_distance(
 )
 ```
 
-This EMD metric can be also used to compare the distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end
+This EMD measure can be also used to compare the distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end
 timestamps (with `AbsoluteHourEmdType.END`), instead of both of them.
 
 Furthermore, the binning is performed to hour by default, but it can be customized passing another function discretize the total amount of
