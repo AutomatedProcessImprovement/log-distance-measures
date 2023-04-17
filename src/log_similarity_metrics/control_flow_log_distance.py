@@ -13,31 +13,31 @@ from log_similarity_metrics.config import EventLogIDs
 
 
 def control_flow_log_distance(
-        event_log_1: pd.DataFrame,
-        log_1_ids: EventLogIDs,
-        event_log_2: pd.DataFrame,
-        log_2_ids: EventLogIDs,
-        parallel: bool = False
+        original_log: pd.DataFrame,
+        original_ids: EventLogIDs,
+        simulated_log: pd.DataFrame,
+        simulated_ids: EventLogIDs,
+        parallel: bool = True
 ) -> float:
     """
     Compute the Control-Flow Log Distance (see "Camargo M, Dumas M, González-Rojas O. 2021. Discovering generative models
     from event logs: data-driven simulation vs deep learning. PeerJ Computer Science 7:e577 https://doi.org/10.7717/peerj-cs.577"
     for a detailed description of a similarity version of the metric).
 
-    :param event_log_1: first event log.
-    :param log_1_ids: mapping for the column IDs of the first event log.
-    :param event_log_2: second event log.
-    :param log_2_ids: mapping for the column IDs for the second event log.
+    :param original_log: first event log.
+    :param original_ids: mapping for the column IDs of the first event log.
+    :param simulated_log: second event log.
+    :param simulated_ids: mapping for the column IDs for the second event log.
     :param parallel: whether to run the distance computation in parallel or in one single core.
 
     :return: the Control-Flow Log Distance measure between [event_log_1] and [event_log_2].
     """
     # Transform the event log to a list of character sequences representing the traces
-    sequences_1, sequences_2 = _event_logs_to_activity_sequences(event_log_1, log_1_ids, event_log_2, log_2_ids)
-    sequences_1.reset_index(drop=True, inplace=True)
-    sequences_2.reset_index(drop=True, inplace=True)
+    original_sequences, simulated_sequences = _event_logs_to_activity_sequences(original_log, original_ids, simulated_log, simulated_ids)
+    original_sequences.reset_index(drop=True, inplace=True)
+    simulated_sequences.reset_index(drop=True, inplace=True)
     # Calculate the DL distance between each pair of traces
-    cost_matrix = _compute_distance_matrix(sequences_1, sequences_2, parallel)
+    cost_matrix = _compute_distance_matrix(original_sequences, simulated_sequences, parallel)
     # Get the optimum pairing
     row_indexes, col_indexes = linear_sum_assignment(cost_matrix)
     # Compute the Control-Flow Log Distance

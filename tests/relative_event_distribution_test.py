@@ -1,7 +1,7 @@
 import pandas as pd
 
-from log_similarity_metrics.absolute_event_distribution import discretize_to_hour, discretize_to_day, discretize_to_minute
-from log_similarity_metrics.config import DEFAULT_CSV_IDS, AbsoluteTimestampType
+from log_similarity_metrics.config import DEFAULT_CSV_IDS, AbsoluteTimestampType, discretize_to_hour, discretize_to_day, \
+    discretize_to_minute
 from log_similarity_metrics.relative_event_distribution import relative_event_distribution_distance, _relativize_and_discretize
 
 
@@ -172,7 +172,7 @@ def test__relativize_and_discretize():
     # Read event logs with similar inter-arrival times but different timestamps, resources, activity names and trace IDs
     event_log = _read_event_log("./tests/assets/test_event_log_5.csv")
     # Get inter-arrival times
-    relative_timestamps = _relativize_and_discretize(event_log, DEFAULT_CSV_IDS, discretize_instant=discretize_to_minute)
+    relative_timestamps = _relativize_and_discretize(event_log, DEFAULT_CSV_IDS, discretize_event=discretize_to_minute)
     # Inter-arrival times should be similar
     assert sorted(relative_timestamps) == sorted([
         0, 1, 1, 35, 35, 43,
@@ -188,5 +188,5 @@ def test__relativize_and_discretize():
     # The relative and discrete (to minute) times of two logs with delayed timestamps but same relative intervals
     event_log_1 = _read_event_log("./tests/assets/test_event_log_1.csv")
     event_log_2 = _read_event_log("./tests/assets/test_event_log_7.csv")
-    assert (_relativize_and_discretize(event_log_1, DEFAULT_CSV_IDS, discretize_instant=discretize_to_minute) ==
-            _relativize_and_discretize(event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_minute))
+    assert (_relativize_and_discretize(event_log_1, DEFAULT_CSV_IDS, discretize_event=discretize_to_minute) ==
+            _relativize_and_discretize(event_log_2, DEFAULT_CSV_IDS, discretize_event=discretize_to_minute))

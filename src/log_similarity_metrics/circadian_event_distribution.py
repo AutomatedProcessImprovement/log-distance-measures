@@ -8,22 +8,22 @@ from log_similarity_metrics.earth_movers_distance import earth_movers_distance
 
 
 def circadian_event_distribution_distance(
-        event_log_1: pd.DataFrame,
-        log_1_ids: EventLogIDs,
-        event_log_2: pd.DataFrame,
-        log_2_ids: EventLogIDs,
+        original_log: pd.DataFrame,
+        original_ids: EventLogIDs,
+        simulated_log: pd.DataFrame,
+        simulated_ids: EventLogIDs,
         discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
         metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
-        normalize: bool = True
+        normalize: bool = False
 ) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs, windowed by weekday (e.g. the instants
     happening on all Mondays are compared together), and discretized to their hour.
 
-    :param event_log_1: first event log.
-    :param log_1_ids: mapping for the column IDs of the first event log.
-    :param event_log_2: second event log.
-    :param log_2_ids: mapping for the column IDs for the second event log.
+    :param original_log: first event log.
+    :param original_ids: mapping for the column IDs of the first event log.
+    :param simulated_log: second event log.
+    :param simulated_ids: mapping for the column IDs for the second event log.
     :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
     :param metric: distance metric to use in the histogram comparison.
     :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
@@ -31,20 +31,20 @@ def circadian_event_distribution_distance(
     :return: the EMD between the timestamp distribution of the two event logs windowed by weekday.
     """
     # Get discretized start and/or end timestamps
-    discretized_instants_1 = _discretize(event_log_1, log_1_ids, discretize_type)
-    discretized_instants_2 = _discretize(event_log_2, log_2_ids, discretize_type)
+    original_discrete_events = _discretize(original_log, original_ids, discretize_type)
+    simulated_discrete_events = _discretize(simulated_log, simulated_ids, discretize_type)
     # Compute the distance between the instant in the event logs for each weekday
     distances = []
     for week_day in range(7):  # All weekdays
-        window_1 = discretized_instants_1[discretized_instants_1['weekday'] == week_day]['hour']
-        window_2 = discretized_instants_2[discretized_instants_2['weekday'] == week_day]['hour']
-        if len(window_1) > 0 and len(window_2) > 0:
+        original_window = original_discrete_events[original_discrete_events['weekday'] == week_day]['hour']
+        simulated_window = simulated_discrete_events[simulated_discrete_events['weekday'] == week_day]['hour']
+        if len(original_window) > 0 and len(simulated_window) > 0:
             # Both have observations in this weekday
             if metric == DistanceMetric.EMD:
-                distances += [earth_movers_distance(window_1, window_2) / len(window_1)]
+                distances += [earth_movers_distance(original_window, simulated_window) / len(original_window)]
             else:
-                distances += [wasserstein_distance(window_1, window_2)]
-        elif len(window_1) == 0 and len(window_2) == 0:
+                distances += [wasserstein_distance(original_window, simulated_window)]
+        elif len(original_window) == 0 and len(simulated_window) == 0:
             # Both have no observations in this weekday
             distances += [0.0]
         else:
@@ -53,7 +53,7 @@ def circadian_event_distribution_distance(
     # Compute distance metric
     distance = mean(distances)
     if normalize:
-        distance = distance / 23
+        distance = distance / 23.0
     # Return metric
     return distance
 

@@ -3,10 +3,9 @@ import datetime
 import pandas as pd
 from pandas import Timedelta
 
-from log_similarity_metrics.absolute_event_distribution import discretize_to_day, discretize_to_minute, discretize_to_hour
 from log_similarity_metrics.case_arrival_distribution import inter_arrival_distribution_distance, _get_inter_arrival_times, \
     case_arrival_distribution_distance, _get_arrival_events
-from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_similarity_metrics.config import DEFAULT_CSV_IDS, discretize_to_day, discretize_to_minute, discretize_to_hour
 
 
 def _read_event_log(path: str) -> pd.DataFrame:
@@ -22,23 +21,23 @@ def test_case_arrival_distribution_distance_similar_logs():
     event_log_2 = _read_event_log("./tests/assets/test_event_log_4.csv")
     # Normalized distance should be 0 as both distributions are exactly the same
     assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_minute, normalize=True
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_event=discretize_to_minute, normalize=True
     ) == 0.0
     assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_hour, normalize=True
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_event=discretize_to_hour, normalize=True
     ) == 0.0
     assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_day, normalize=True
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_event=discretize_to_day, normalize=True
     ) == 0.0
     # Non normalized distance should be 0 as both distributions are exactly the same
     assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_minute
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_event=discretize_to_minute
     ) == 0.0
     assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_hour
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_event=discretize_to_hour
     ) == 0.0
     assert case_arrival_distribution_distance(
-        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_instant=discretize_to_day
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS, discretize_event=discretize_to_day
     ) == 0.0
 
 

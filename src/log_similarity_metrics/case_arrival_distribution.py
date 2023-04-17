@@ -4,17 +4,16 @@ import math
 import pandas as pd
 from scipy.stats import wasserstein_distance
 
-from log_similarity_metrics.absolute_event_distribution import discretize_to_hour
-from log_similarity_metrics.config import EventLogIDs, DistanceMetric
+from log_similarity_metrics.config import EventLogIDs, DistanceMetric, discretize_to_hour
 from log_similarity_metrics.earth_movers_distance import earth_movers_distance
 
 
 def case_arrival_distribution_distance(
-        event_log_1: pd.DataFrame,
-        log_1_ids: EventLogIDs,
-        event_log_2: pd.DataFrame,
-        log_2_ids: EventLogIDs,
-        discretize_instant=discretize_to_hour,  # function to discretize a total amount of seconds into bins
+        original_log: pd.DataFrame,
+        original_ids: EventLogIDs,
+        simulated_log: pd.DataFrame,
+        simulated_ids: EventLogIDs,
+        discretize_event=discretize_to_hour,  # function to discretize a total amount of seconds into bins
         metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
         normalize: bool = False
 ) -> float:
@@ -22,11 +21,11 @@ def case_arrival_distribution_distance(
     EMD (or Wasserstein Distance) between the distribution of case arrival of two event logs. To get this distribution, the timestamps are
     discretized to bins of size given by [discretize_instance] (default by hour).
 
-    :param event_log_1: first event log.
-    :param log_1_ids: mapping for the column IDs of the first event log.
-    :param event_log_2: second event log.
-    :param log_2_ids: mapping for the column IDs for the second event log.
-    :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
+    :param original_log: first event log.
+    :param original_ids: mapping for the column IDs of the first event log.
+    :param simulated_log: second event log.
+    :param simulated_ids: mapping for the column IDs for the second event log.
+    :param discretize_event: function to discretize the total amount of seconds each timestamp represents, default to hour.
     :param metric: distance metric to use in the histogram comparison.
     :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
@@ -34,27 +33,32 @@ def case_arrival_distribution_distance(
     distance) to transform one timestamp histogram into the other.
     """
     # Get arrival events of each log
-    arrivals_1 = _get_arrival_events(event_log_1, log_1_ids)
-    arrivals_2 = _get_arrival_events(event_log_2, log_2_ids)
+    original_arrivals = _get_arrival_events(original_log, original_ids)
+    simulated_arrivals = _get_arrival_events(simulated_log, simulated_ids)
     # Get the first arrival to normalize
-    first_arrival = min(arrivals_1[log_1_ids.start_time].min(), arrivals_2[log_2_ids.start_time].min()).floor(freq='H')
-    # Discretize each instant to its corresponding "bin"
-    discretized_arrivals_1 = [
-        discretize_instant(difference.total_seconds()) for difference in (arrivals_1[log_1_ids.start_time] - first_arrival)
+    first_arrival = min(
+        original_arrivals[original_ids.start_time].min(),
+        simulated_arrivals[simulated_ids.start_time].min()
+    ).floor(freq='H')
+    # Discretize each event to its corresponding "bin"
+    original_discrete_arrivals = [
+        discretize_event(difference.total_seconds())
+        for difference in (original_arrivals[original_ids.start_time] - first_arrival)
     ]
-    discretized_arrivals_2 = [
-        discretize_instant(difference.total_seconds()) for difference in (arrivals_2[log_2_ids.start_time] - first_arrival)
+    simulated_discrete_arrivals = [
+        discretize_event(difference.total_seconds())
+        for difference in (simulated_arrivals[simulated_ids.start_time] - first_arrival)
     ]
     # Compute distance metric
     if metric == DistanceMetric.EMD:
-        distance = earth_movers_distance(discretized_arrivals_1, discretized_arrivals_2) / len(discretized_arrivals_1)
+        distance = earth_movers_distance(original_discrete_arrivals, simulated_discrete_arrivals) / len(original_discrete_arrivals)
     else:
-        distance = wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
+        distance = wasserstein_distance(original_discrete_arrivals, simulated_discrete_arrivals)
     # Normalize if needed
     if normalize:
         print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
               "long samples may cause a higher reduction of the error.")
-        max_value = max(max(discretized_arrivals_1), max(discretized_arrivals_2))
+        max_value = max(max(original_discrete_arrivals), max(simulated_discrete_arrivals))
         distance = distance / max_value if max_value > 0 else 0
     # Return metric
     return distance
@@ -78,10 +82,10 @@ def _get_arrival_events(event_log: pd.DataFrame, log_ids: EventLogIDs) -> pd.Dat
 
 
 def inter_arrival_distribution_distance(
-        event_log_1: pd.DataFrame,
-        log_1_ids: EventLogIDs,
-        event_log_2: pd.DataFrame,
-        log_2_ids: EventLogIDs,
+        original_log: pd.DataFrame,
+        original_ids: EventLogIDs,
+        simulated_log: pd.DataFrame,
+        simulated_ids: EventLogIDs,
         bin_size: datetime.timedelta,
         metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
         normalize: bool = False
@@ -90,10 +94,10 @@ def inter_arrival_distribution_distance(
     EMD (or Wasserstein Distance) between the distribution of inter-arrival times of two event logs. To get this distribution, the
     inter-arrival times are discretized to bins of size [bin_size].
 
-    :param event_log_1: first event log.
-    :param log_1_ids: mapping for the column IDs of the first event log.
-    :param event_log_2: second event log.
-    :param log_2_ids: mapping for the column IDs for the second event log.
+    :param original_log: first event log.
+    :param original_ids: mapping for the column IDs of the first event log.
+    :param simulated_log: second event log.
+    :param simulated_ids: mapping for the column IDs for the second event log.
     :param bin_size: time interval to define the bin size.
     :param metric: distance metric to use in the histogram comparison.
     :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
@@ -102,21 +106,33 @@ def inter_arrival_distribution_distance(
     distance) to transform one inter-arrival time histogram into the other.
     """
     # Get inter-arrival times
-    inter_arrivals_1 = _get_inter_arrival_times(event_log_1, log_1_ids)
-    inter_arrivals_2 = _get_inter_arrival_times(event_log_2, log_2_ids)
-    # Discretize each instant to its corresponding "bin"
-    discretized_inter_arrivals_1 = [math.floor(inter_arrival / bin_size) for inter_arrival in inter_arrivals_1]
-    discretized_inter_arrivals_2 = [math.floor(inter_arrival / bin_size) for inter_arrival in inter_arrivals_2]
+    original_inter_arrivals = _get_inter_arrival_times(original_log, original_ids)
+    simulated_inter_arrivals = _get_inter_arrival_times(simulated_log, simulated_ids)
+    # Discretize each event to its corresponding "bin"
+    original_discrete_inter_arrivals = [
+        math.floor(inter_arrival / bin_size)
+        for inter_arrival in original_inter_arrivals
+    ]
+    simulated_discrete_inter_arrivals = [
+        math.floor(inter_arrival / bin_size)
+        for inter_arrival in simulated_inter_arrivals
+    ]
     # Compute distance metric
     if metric == DistanceMetric.EMD:
-        distance = earth_movers_distance(discretized_inter_arrivals_1, discretized_inter_arrivals_2) / len(discretized_inter_arrivals_1)
+        distance = earth_movers_distance(
+            original_discrete_inter_arrivals,
+            simulated_discrete_inter_arrivals
+        ) / len(original_discrete_inter_arrivals)
     else:
-        distance = wasserstein_distance(discretized_inter_arrivals_1, discretized_inter_arrivals_2)
+        distance = wasserstein_distance(
+            original_discrete_inter_arrivals,
+            simulated_discrete_inter_arrivals
+        )
     # Normalize if needed
     if normalize:
         print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
               "long samples may cause a higher reduction of the error.")
-        max_value = max(max(discretized_inter_arrivals_1), max(discretized_inter_arrivals_2))
+        max_value = max(max(original_discrete_inter_arrivals), max(simulated_discrete_inter_arrivals))
         distance = distance / max_value if max_value > 0 else 0
     # Return metric
     return distance

@@ -56,8 +56,8 @@ from log_similarity_metrics.control_flow_log_distance import control_flow_log_di
 
 # Call passing the event logs, and its column ID mappings
 distance = control_flow_log_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
 )
 ```
 
@@ -82,8 +82,8 @@ from log_similarity_metrics.n_gram_distribution import n_gram_distribution_dista
 
 # Call passing the event logs, and its column ID mappings
 distance = n_gram_distribution_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     n=3  # trigrams
 )
 ```
@@ -103,15 +103,15 @@ hour.
 ### Example of use
 
 ```python
-from log_similarity_metrics.absolute_event_distribution import absolute_event_distribution_distance, discretize_to_hour
-from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS
+from log_similarity_metrics.absolute_event_distribution import absolute_event_distribution_distance
+from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS, discretize_to_hour
 
 # Call passing the event logs, its column ID mappings, timestamp type, and discretize function
 distance = absolute_event_distribution_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     discretize_type=AbsoluteTimestampType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
-    discretize_instant=discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
+    discretize_event=discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
 )
 ```
 
@@ -124,22 +124,22 @@ seconds to its bin.
 ```python
 import math
 
-from log_similarity_metrics.absolute_event_distribution import absolute_event_distribution_distance, discretize_to_day
-from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS
+from log_similarity_metrics.absolute_event_distribution import absolute_event_distribution_distance
+from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS, discretize_to_day
 
 # EMD of the (END) timestamps distribution where each bin represents a day
 distance = absolute_event_distribution_distance(
-    event_log_1, DEFAULT_CSV_IDS,
-    event_log_2, DEFAULT_CSV_IDS,
+    original_log, DEFAULT_CSV_IDS,
+    simulated_log, DEFAULT_CSV_IDS,
     discretize_type=AbsoluteTimestampType.END,
-    discretize_instant=discretize_to_day
+    discretize_event=discretize_to_day
 )
 
 # EMD of the timestamps distribution where each bin represents a week
 distance = absolute_event_distribution_distance(
-    event_log_1, DEFAULT_CSV_IDS,
-    event_log_2, DEFAULT_CSV_IDS,
-    discretize_instant=lambda seconds: math.floor(seconds / 3600 / 24 / 7)
+    original_log, DEFAULT_CSV_IDS,
+    simulated_log, DEFAULT_CSV_IDS,
+    discretize_event=lambda seconds: math.floor(seconds / 3600 / 24 / 7)
 )
 ```
 
@@ -157,14 +157,13 @@ Distance measure computing how different the discretized histograms of the arriv
 ### Example of use
 
 ```python
-from log_similarity_metrics.absolute_event_distribution import discretize_to_hour
 from log_similarity_metrics.case_arrival_distribution import case_arrival_distribution_distance
-from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_similarity_metrics.config import DEFAULT_CSV_IDS, discretize_to_hour
 
 distance = case_arrival_distribution_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    discretize_instant=discretize_to_hour  # Function to discretize each timestamp (default by hour)
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    discretize_event=discretize_to_hour  # Function to discretize each timestamp (default by hour)
 )
 ```
 
@@ -192,8 +191,8 @@ from log_similarity_metrics.circadian_event_distribution import circadian_event_
 from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS
 
 distance = circadian_event_distribution_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     discretize_type=AbsoluteTimestampType.BOTH  # Consider both start/end timestamps of each activity instance
 )
 ```
@@ -218,15 +217,15 @@ discretizing the timestamps by absolute hour.
 ### Example of use
 
 ```python
-from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS
-from log_similarity_metrics.relative_event_distribution import relative_event_distribution_distance, discretize_to_hour
+from log_similarity_metrics.config import AbsoluteTimestampType, DEFAULT_CSV_IDS, discretize_to_hour
+from log_similarity_metrics.relative_event_distribution import relative_event_distribution_distance
 
 # Call passing the event logs, its column ID mappings, timestamp type, and discretize function
 distance = relative_event_distribution_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     discretize_type=AbsoluteTimestampType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
-    discretize_instant=discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
+    discretize_event=discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
 )
 ```
 
@@ -236,12 +235,14 @@ both of them.
 
 &nbsp;
 
-## Active Cases Over Time Distance
+## Work in Progress Distance
 
-Distance measure computing how different the histograms of the number of active cases (at start of each hour) of two event logs are.
+Distance measure computing how different the histograms of the number of active cases (computing the average active cases per window) of two
+event logs are.
 
 1. Build a timeline with a bin for each hour since the beginning to the end of both logs.
-2. Compute, for each bin, the number of cases active at the beginning of that hour (e.g. active cases at 01/01/2023 10:00:00).
+2. Compute, for each bin, the average number of active cases (e.g. 4 and a half active cases in the window from `01/01/2023 10:00:00` to
+   `01/01/2023 10:59:59`).
 3. Compare the histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
 ### Example of use
@@ -250,12 +251,12 @@ Distance measure computing how different the histograms of the number of active 
 import pandas as pd
 
 from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.active_cases_over_time import active_cases_over_time_distance
+from log_similarity_metrics.active_cases_over_time import work_in_progress_distance
 
 # Call passing the event logs, its column ID mappings, timestamp type, and discretize function
-active_cases_over_time_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+work_in_progress_distance(
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     window_size=pd.Timedelta(hours=1)  # Bins of 1 hour
 )
 ```
@@ -279,8 +280,8 @@ from log_similarity_metrics.config import DEFAULT_CSV_IDS
 from log_similarity_metrics.cycle_time_distribution import cycle_time_distribution_distance
 
 distance = cycle_time_distribution_distance(
-    event_log_1, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    event_log_2, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     bin_size=pd.Timedelta(hours=1)  # Bins of 1 hour
 )
 ```

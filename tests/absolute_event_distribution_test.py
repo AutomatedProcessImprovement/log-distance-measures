@@ -1,8 +1,7 @@
 import pandas as pd
 
-from log_similarity_metrics.absolute_event_distribution import absolute_event_distribution_distance, discretize_to_hour, \
-    discretize_to_day
-from log_similarity_metrics.config import DEFAULT_CSV_IDS, AbsoluteTimestampType
+from log_similarity_metrics.absolute_event_distribution import absolute_event_distribution_distance
+from log_similarity_metrics.config import DEFAULT_CSV_IDS, AbsoluteTimestampType, discretize_to_hour, discretize_to_day
 
 
 def _read_event_log(path: str) -> pd.DataFrame:
