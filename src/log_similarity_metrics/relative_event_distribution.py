@@ -2,7 +2,8 @@ import pandas as pd
 from scipy.stats import wasserstein_distance
 
 from log_similarity_metrics.absolute_event_distribution import discretize_to_hour
-from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType
+from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType, DistanceMetric
+from log_similarity_metrics.earth_movers_distance import earth_movers_distance
 
 
 def relative_event_distribution_distance(
@@ -12,6 +13,7 @@ def relative_event_distribution_distance(
         log_2_ids: EventLogIDs,
         discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
         discretize_instant=discretize_to_hour,  # function to discretize a total amount of seconds into bins
+        metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
         normalize: bool = False
 ) -> float:
     """
@@ -25,6 +27,7 @@ def relative_event_distribution_distance(
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param discretize_type: type of timestamps to consider (only take into account start timestamps, only end timestamps, or both).
     :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
+    :param metric: distance metric to use in the histogram comparison.
     :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the relative timestamp distribution of the two event logs, measuring the amount of movements (considering their
@@ -34,7 +37,11 @@ def relative_event_distribution_distance(
     relative_1 = _relativize_and_discretize(event_log_1, log_1_ids, discretize_type, discretize_instant)
     relative_2 = _relativize_and_discretize(event_log_2, log_2_ids, discretize_type, discretize_instant)
     # Compute distance metric
-    distance = wasserstein_distance(relative_1, relative_2)
+    if metric == DistanceMetric.EMD:
+        distance = earth_movers_distance(relative_1, relative_2) / len(relative_1)
+    else:
+        distance = wasserstein_distance(relative_1, relative_2)
+    # Normalize if needed
     if normalize:
         print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
               "long samples may cause a higher reduction of the error.")

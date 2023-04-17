@@ -24,3 +24,8 @@ class AbsoluteTimestampType(enum.Enum):
     BOTH = 0
     START = 1
     END = 2
+
+class DistanceMetric(enum.Enum):
+    EMD = 0
+    WASSERSTEIN = 1
+

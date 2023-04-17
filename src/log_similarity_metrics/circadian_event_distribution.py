@@ -3,7 +3,8 @@ from statistics import mean
 import pandas as pd
 from scipy.stats import wasserstein_distance
 
-from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType
+from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType, DistanceMetric
+from log_similarity_metrics.earth_movers_distance import earth_movers_distance
 
 
 def circadian_event_distribution_distance(
@@ -12,6 +13,7 @@ def circadian_event_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         discretize_type: AbsoluteTimestampType = AbsoluteTimestampType.BOTH,
+        metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
         normalize: bool = True
 ) -> float:
     """
@@ -23,6 +25,7 @@ def circadian_event_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param discretize_type: type of EMD measure (only take into account start timestamps, only end timestamps, or both).
+    :param metric: distance metric to use in the histogram comparison.
     :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the timestamp distribution of the two event logs windowed by weekday.
@@ -37,13 +40,16 @@ def circadian_event_distribution_distance(
         window_2 = discretized_instants_2[discretized_instants_2['weekday'] == week_day]['hour']
         if len(window_1) > 0 and len(window_2) > 0:
             # Both have observations in this weekday
-            distances += [wasserstein_distance(window_1, window_2)]
+            if metric == DistanceMetric.EMD:
+                distances += [earth_movers_distance(window_1, window_2) / len(window_1)]
+            else:
+                distances += [wasserstein_distance(window_1, window_2)]
         elif len(window_1) == 0 and len(window_2) == 0:
             # Both have no observations in this weekday
-            distances += [0]
+            distances += [0.0]
         else:
             # Only one has observations in this weekday, penalize with max distance value
-            distances += [23]  # 23 is the maximum EMD value for two histograms with values between 0 and 23.
+            distances += [23.0]  # 23 is the maximum value for two histograms with values between 0 and 23.
     # Compute distance metric
     distance = mean(distances)
     if normalize:

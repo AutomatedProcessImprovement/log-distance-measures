@@ -5,7 +5,8 @@ import pandas as pd
 from scipy.stats import wasserstein_distance
 
 from log_similarity_metrics.absolute_event_distribution import discretize_to_hour
-from log_similarity_metrics.config import EventLogIDs
+from log_similarity_metrics.config import EventLogIDs, DistanceMetric
+from log_similarity_metrics.earth_movers_distance import earth_movers_distance
 
 
 def case_arrival_distribution_distance(
@@ -14,6 +15,7 @@ def case_arrival_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         discretize_instant=discretize_to_hour,  # function to discretize a total amount of seconds into bins
+        metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
         normalize: bool = False
 ) -> float:
     """
@@ -25,6 +27,7 @@ def case_arrival_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param discretize_instant: function to discretize the total amount of seconds each timestamp represents, default to hour.
+    :param metric: distance metric to use in the histogram comparison.
     :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the case arrival distribution of the two event logs, measuring the amount of movements (considering their
@@ -43,7 +46,11 @@ def case_arrival_distribution_distance(
         discretize_instant(difference.total_seconds()) for difference in (arrivals_2[log_2_ids.start_time] - first_arrival)
     ]
     # Compute distance metric
-    distance = wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
+    if metric == DistanceMetric.EMD:
+        distance = earth_movers_distance(discretized_arrivals_1, discretized_arrivals_2) / len(discretized_arrivals_1)
+    else:
+        distance = wasserstein_distance(discretized_arrivals_1, discretized_arrivals_2)
+    # Normalize if needed
     if normalize:
         print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
               "long samples may cause a higher reduction of the error.")
@@ -76,6 +83,7 @@ def inter_arrival_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         bin_size: datetime.timedelta,
+        metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
         normalize: bool = False
 ) -> float:
     """
@@ -87,6 +95,7 @@ def inter_arrival_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param bin_size: time interval to define the bin size.
+    :param metric: distance metric to use in the histogram comparison.
     :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
 
     :return: the EMD between the inter-arrival time distribution of the two event logs, measuring the amount of movements (considering their
@@ -99,7 +108,11 @@ def inter_arrival_distribution_distance(
     discretized_inter_arrivals_1 = [math.floor(inter_arrival / bin_size) for inter_arrival in inter_arrivals_1]
     discretized_inter_arrivals_2 = [math.floor(inter_arrival / bin_size) for inter_arrival in inter_arrivals_2]
     # Compute distance metric
-    distance = wasserstein_distance(discretized_inter_arrivals_1, discretized_inter_arrivals_2)
+    if metric == DistanceMetric.EMD:
+        distance = earth_movers_distance(discretized_inter_arrivals_1, discretized_inter_arrivals_2) / len(discretized_inter_arrivals_1)
+    else:
+        distance = wasserstein_distance(discretized_inter_arrivals_1, discretized_inter_arrivals_2)
+    # Normalize if needed
     if normalize:
         print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
               "long samples may cause a higher reduction of the error.")

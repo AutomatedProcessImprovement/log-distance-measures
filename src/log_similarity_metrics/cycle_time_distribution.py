@@ -4,7 +4,8 @@ import math
 import pandas as pd
 from scipy.stats import wasserstein_distance
 
-from log_similarity_metrics.config import EventLogIDs
+from log_similarity_metrics.config import EventLogIDs, DistanceMetric
+from log_similarity_metrics.earth_movers_distance import earth_movers_distance
 
 
 def cycle_time_distribution_distance(
@@ -13,6 +14,7 @@ def cycle_time_distribution_distance(
         event_log_2: pd.DataFrame,
         log_2_ids: EventLogIDs,
         bin_size: datetime.timedelta,
+        metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
         normalize: bool = False
 ) -> float:
     """
@@ -24,7 +26,8 @@ def cycle_time_distribution_distance(
     :param event_log_2: second event log.
     :param log_2_ids: mapping for the column IDs for the second event log.
     :param bin_size: time interval to define the bin size.
-    :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0]
+    :param metric: distance metric to use in the histogram comparison.
+    :param normalize: whether to normalize the distance metric to a value in [0.0, 1.0].
 
     :return: the EMD between the cycle time distribution of the two event logs, measuring the amount of movements (considering their
     distance) to transform one cycle time histogram into the other.
@@ -42,7 +45,11 @@ def cycle_time_distribution_distance(
     discretized_durations_1 = [math.floor((trace_duration - min_duration) / bin_size) for trace_duration in trace_durations_1]
     discretized_durations_2 = [math.floor((trace_duration - min_duration) / bin_size) for trace_duration in trace_durations_2]
     # Compute distance metric
-    distance = wasserstein_distance(discretized_durations_1, discretized_durations_2)
+    if metric == DistanceMetric.EMD:
+        distance = earth_movers_distance(discretized_durations_1, discretized_durations_2) / len(discretized_durations_1)
+    else:
+        distance = wasserstein_distance(discretized_durations_1, discretized_durations_2)
+    # Normalize if needed
     if normalize:
         print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
               "long samples may cause a higher reduction of the error.")
