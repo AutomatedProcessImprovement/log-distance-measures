@@ -100,7 +100,7 @@ def _event_log_to_activity_sequence(event_log: pd.DataFrame, log_ids: EventLogID
     # For each case, map the activities to character sequence
     for case_id, events in event_log.groupby(log_ids.case):
         case_ids += [case_id]
-        sorted_events = events.sort_values([log_ids.end_time, log_ids.start_time])
+        sorted_events = events.sort_values([log_ids.start_time, log_ids.end_time])
         activity_sequences += [
             "".join([mapping[activity] for activity in sorted_events[log_ids.activity]])
         ]

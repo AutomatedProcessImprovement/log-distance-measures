@@ -66,7 +66,7 @@ def _compute_n_grams(event_log: pd.DataFrame, log_ids: EventLogIDs, activity_lab
     for case_id, events in event_log.groupby(log_ids.case):
         # List with the IDs of each activity
         events = [0] * (n - 1) + [
-            activity_to_int.index(event) for event in events.sort_values([log_ids.end_time, log_ids.start_time])[log_ids.activity]
+            activity_to_int.index(event) for event in events.sort_values([log_ids.start_time, log_ids.end_time])[log_ids.activity]
         ] + [0] * (n - 1)
         # Go over the IDs in a n-sized window
         for i in range(len(events) - n + 1):
