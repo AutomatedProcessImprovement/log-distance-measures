@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='log_similarity_metrics',
-    version='0.11.1',
+    name='log_distance_measures',
+    version='0.12.0',
     package_dir={"": "src"},
     include_package_data=True,
     install_requires=[

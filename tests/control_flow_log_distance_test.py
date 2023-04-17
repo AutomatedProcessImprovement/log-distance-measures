@@ -1,7 +1,7 @@
 import pandas as pd
 
-from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.control_flow_log_distance import _event_log_to_activity_sequence, _event_logs_to_activity_sequences, \
+from log_distance_measures.config import DEFAULT_CSV_IDS
+from log_distance_measures.control_flow_log_distance import _event_log_to_activity_sequence, _event_logs_to_activity_sequences, \
     control_flow_log_distance
 
 

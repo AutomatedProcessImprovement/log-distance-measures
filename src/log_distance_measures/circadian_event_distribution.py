@@ -3,8 +3,8 @@ from statistics import mean
 import pandas as pd
 from scipy.stats import wasserstein_distance
 
-from log_similarity_metrics.config import EventLogIDs, AbsoluteTimestampType, DistanceMetric
-from log_similarity_metrics.earth_movers_distance import earth_movers_distance
+from log_distance_measures.config import EventLogIDs, AbsoluteTimestampType, DistanceMetric
+from log_distance_measures.earth_movers_distance import earth_movers_distance
 
 
 def circadian_event_distribution_distance(

@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from log_similarity_metrics.config import EventLogIDs
+from log_distance_measures.config import EventLogIDs
 
 
 def work_in_progress_distance(

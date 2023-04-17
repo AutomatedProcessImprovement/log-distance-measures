@@ -1,7 +1,7 @@
 import pandas as pd
 
-from log_similarity_metrics.circadian_event_distribution import circadian_event_distribution_distance
-from log_similarity_metrics.config import DEFAULT_CSV_IDS, AbsoluteTimestampType
+from log_distance_measures.circadian_event_distribution import circadian_event_distribution_distance
+from log_distance_measures.config import DEFAULT_CSV_IDS, AbsoluteTimestampType
 
 
 def _read_event_log(path: str) -> pd.DataFrame:

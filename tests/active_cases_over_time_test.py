@@ -1,8 +1,8 @@
 import pandas as pd
 
-from log_similarity_metrics.active_cases_over_time import _num_active_cases_over_time, \
+from log_distance_measures.active_cases_over_time import _num_active_cases_over_time, \
     work_in_progress_distance, num_active_cases_over_time_distance, _compute_work_in_progress
-from log_similarity_metrics.config import DEFAULT_CSV_IDS
+from log_distance_measures.config import DEFAULT_CSV_IDS
 
 
 def _read_event_log(path: str) -> pd.DataFrame:

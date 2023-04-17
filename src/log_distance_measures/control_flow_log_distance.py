@@ -9,7 +9,7 @@ import pandas as pd
 from jellyfish import damerau_levenshtein_distance
 from scipy.optimize import linear_sum_assignment
 
-from log_similarity_metrics.config import EventLogIDs
+from log_distance_measures.config import EventLogIDs
 
 
 def control_flow_log_distance(

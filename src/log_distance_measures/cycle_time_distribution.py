@@ -4,8 +4,8 @@ import math
 import pandas as pd
 from scipy.stats import wasserstein_distance
 
-from log_similarity_metrics.config import EventLogIDs, DistanceMetric
-from log_similarity_metrics.earth_movers_distance import earth_movers_distance
+from log_distance_measures.config import EventLogIDs, DistanceMetric
+from log_distance_measures.earth_movers_distance import earth_movers_distance
 
 
 def cycle_time_distribution_distance(

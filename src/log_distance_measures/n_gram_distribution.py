@@ -1,6 +1,6 @@
 import pandas as pd
 
-from log_similarity_metrics.config import EventLogIDs
+from log_distance_measures.config import EventLogIDs
 
 
 def n_gram_distribution_distance(

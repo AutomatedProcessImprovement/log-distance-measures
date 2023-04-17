@@ -2,8 +2,8 @@ import datetime
 
 import pandas as pd
 
-from log_similarity_metrics.config import DEFAULT_CSV_IDS
-from log_similarity_metrics.cycle_time_distribution import cycle_time_distribution_distance
+from log_distance_measures.config import DEFAULT_CSV_IDS
+from log_distance_measures.cycle_time_distribution import cycle_time_distribution_distance
 
 
 def _read_event_log(path: str) -> pd.DataFrame:

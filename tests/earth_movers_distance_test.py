@@ -1,4 +1,4 @@
-from log_similarity_metrics.earth_movers_distance import earth_movers_distance, _clean_histograms
+from log_distance_measures.earth_movers_distance import earth_movers_distance, _clean_histograms
 
 
 def test_earth_movers_distance():
