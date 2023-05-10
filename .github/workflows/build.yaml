@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: PyPI
-      url: https://pypi.org/p/start-time-estimator
+      url: https://pypi.org/p/log-distance-measures
     permissions:
       id-token: write
       contents: write
