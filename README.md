@@ -1,5 +1,15 @@
 # Event Log Distance Measures
 
+## Installation
+
+Package available in PyPI: https://pypi.org/project/log-distance-measures/. Install it with:
+
+```bash
+pip install log-distance-measures
+```
+
+## Description
+
 Python package with the implementation of different distance measures between two event logs, from the control-flow, temporal, and queuing
 perspectives:
 
