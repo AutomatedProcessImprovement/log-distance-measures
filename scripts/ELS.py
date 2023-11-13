@@ -23,23 +23,15 @@ from scipy.stats import wasserstein_distance
 @dataclass
 class EventLogIDs:
     case: str = 'case_id'
-    activity: str = 'Activity'
-    enabled_time: str = 'enabled_time'
+    activity: str = 'activity'
     start_time: str = 'start_time'
     end_time: str = 'end_time'
-    resource: str = 'Resource'
+    resource: str = 'resource'
 
 
 # You can change these values if the simulated logs have different IDs
 log_1_ids = EventLogIDs()
-log_2_ids = EventLogIDs(
-    case='case_id',
-    activity='activity',
-    enabled_time='enabled_time',
-    start_time='start_time',
-    end_time='end_time',
-    resource='resource'
-)
+log_2_ids = EventLogIDs()
 
 
 class DistanceMetric(enum.Enum):
@@ -230,10 +222,7 @@ def circadian_event_distribution_distance(
             distances += [0.0]
         else:
             # Only one has observations in this weekday, penalize with max distance value
-            if metric == DistanceMetric.EMD:
-                distances += [(len(window_1) + len(window_2))]  # Number of observations
-            else:
-                distances += [23.0]  # 23 is the maximum wasserstein value for two histograms with values between 0 and 23.
+            distances += [23.0]  # 23 is the maximum wasserstein value for two histograms with values between 0 and 23.
     # Compute distance metric
     distance = mean(distances)
     # Return metric
@@ -425,84 +414,6 @@ def _relativize_and_discretize(
                            ]
     # Return discretized timestamps
     return discretized_instants
-
-
-##############################
-# - ACTIVE CASES OVER TIME - #
-##############################
-
-def work_in_progress_distance(
-        event_log_1: pd.DataFrame,
-        event_log_2: pd.DataFrame
-) -> float:
-    """
-    EMD (or Wasserstein Distance) between the distribution of active cases over time. To get this distribution, the percentage of each
-    window that is covered by active cases is computed. For example, given the window from 10am to 11am, if there are three cases active
-    during the whole window (1 + 1 + 1), one case active half of the window (0.5), and two cases active a quarter of the window (0.25 +
-    0.25), the active value for that hour is 4.
-
-    :param event_log_1: first event log.
-    :param event_log_2: second event log.
-    :param metric: distance metric to use in the histogram comparison.
-
-    :return: the EMD between the distribution of active cases over time of the two event logs, measuring the amount of movements
-    (considering their distance) to transform one timestamp histogram into the other.
-    """
-    # Get timeline (reset to day in case daily frequency is used)
-    start = min(event_log_1[log_1_ids.start_time].min(), event_log_2[log_2_ids.start_time].min()).floor(freq='H')
-    end = max(event_log_1[log_1_ids.end_time].max(), event_log_2[log_2_ids.end_time].max()).ceil(freq='H')
-    # Compute the active area of each bin
-    wip_1 = _compute_work_in_progress(event_log_1, log_1_ids, start, end, pd.Timedelta(hours=1))
-    wip_2 = _compute_work_in_progress(event_log_2, log_2_ids, start, end, pd.Timedelta(hours=1))
-    # Compute SAE over the histograms
-    distance = sum([
-        abs(wip_1.get(key, 0) - wip_2.get(key, 0))
-        for key
-        in set(list(wip_1.keys()) + list(wip_2.keys()))
-    ]) / (sum(wip_1.values()) + sum(wip_2.values()))
-    # Return metric
-    return distance
-
-
-def _compute_work_in_progress(
-        event_log: pd.DataFrame,
-        log_ids: EventLogIDs,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
-        window_size: pd.Timedelta
-) -> dict:
-    """
-    Compute, for each bin of [window_size] size within the interval from [start] to [end], the percentage of "area" where there was an
-    active case. For example, given the window from 10am to 11am, if there are three cases active during the whole window (1 + 1 + 1),
-    one case active half of the window (0.5), and two cases active a quarter of the window (0.25 + 0.25), the active value for that hour
-    is 4.
-
-    :param event_log: first event log.
-    :param log_ids: mapping for the column IDs of the first event log.
-    :param start: timestamp denoting the start of the interval to search in.
-    :param end: timestamp denoting the end of the interval to search in.
-    :param window_size: window to check the number of cases at the beginning of it.
-
-    :return: a dict with the ID of each window and the work in progress in it.
-    """
-    # Transform event logs to cases
-    cases = []
-    for _case_id, events in event_log.groupby(log_ids.case):
-        cases += [{'start': events[log_ids.start_time].min(), 'end': events[log_ids.end_time].max()}]
-    cases = pd.DataFrame(cases)
-    # Go over each bin computing the active area
-    wip = {}
-    for offset in range(math.ceil((end - start) / window_size)):
-        current_window_start = start + window_size * offset
-        current_window_end = current_window_start + window_size
-        # Compute overlapping intervals (0s if no overlapping)
-        within_window = (np.minimum(cases['end'], current_window_end) - np.maximum(cases['start'], current_window_start))
-        # Sum positive ones (within the current window) and normalize area
-        wip_value = sum(within_window[within_window > pd.Timedelta(0)], pd.Timedelta(0)) / window_size
-        if wip_value > 0:
-            wip[offset] = wip_value
-    # Return WiP dict
-    return wip
 
 
 #######################
@@ -717,15 +628,7 @@ def _compare_traces(args) -> list:
 # - MAIN SCRIPT - #
 ###################
 
-if __name__ == '__main__':
-    # Parse args
-    parser = argparse.ArgumentParser(description='Compute temporal distance measures of one or a set '
-                                                 'of simulated event logs w.r.t. the original event log.')
-    parser.add_argument("-cfld", action="store_true", help="Flag to compute also the CFLD metric.")
-    parser.add_argument("original_log", help="Path to the original event log in CSV format.")
-    parser.add_argument("simulated_log", help="Path to the simulated event log (or directory with a set of "
-                                              "simulated logs) in CSV format.")
-    args = parser.parse_args()
+def main(args):
     # Parse simulated log/logs path
     if os.path.isdir(args.simulated_log):
         simulated_paths = [
@@ -754,7 +657,6 @@ if __name__ == '__main__':
         outfile.write("case_arrival_emd,case_arrival_emd_runtime,case_arrival_wass,case_arrival_wass_runtime,")
         outfile.write("circadian_emd,circadian_emd_runtime,circadian_wass,circadian_wass_runtime,")
         outfile.write("relative_emd,relative_emd_runtime,relative_wass,relative_wass_runtime,")
-        outfile.write("wip,wip_runtime,")
         outfile.write("cycle_time_wass,cycle_time_wass_runtime\n")
     for simulated_path in simulated_paths:
         # Read
@@ -813,11 +715,6 @@ if __name__ == '__main__':
         relative_events_wass = relative_event_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
         relative_events_wass_runtime = time.time() - start
         print("Relative Event Distribution Wasserstein: {} s".format(relative_events_wass_runtime))
-        # Active Cases Over Time (WiP)
-        start = time.time()
-        wip = work_in_progress_distance(original_log, simulated_log)
-        wip_runtime = time.time() - start
-        print("Active Cases Over Time (WiP): {} s".format(wip_runtime))
         # CYCLE TIME
         start = time.time()
         cycle_time_wass = cycle_time_distribution_distance(original_log, simulated_log, bin_size, DistanceMetric.WASSERSTEIN)
@@ -863,11 +760,18 @@ if __name__ == '__main__':
                 relative_events_wass,
                 relative_events_wass_runtime
             ))
-            outfile.write("{},{},".format(
-                wip,
-                wip_runtime
-            ))
             outfile.write("{},{}\n".format(
                 cycle_time_wass,
                 cycle_time_wass_runtime
             ))
+
+
+if __name__ == '__main__':
+    # Parse args
+    parser = argparse.ArgumentParser(description="Compute distance measures of one or a set "
+                                                 "of simulated event logs w.r.t. the original event log.")
+    parser.add_argument("-cfld", action="store_true", help="Flag to compute also the CFLD metric.")
+    parser.add_argument("original_log", help="Path to the original event log in CSV format.")
+    parser.add_argument("simulated_log", help="Path to the simulated event log (or directory with a set of "
+                                              "simulated logs) in CSV format.")
+    main(parser.parse_args())
