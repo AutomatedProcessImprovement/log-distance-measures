@@ -1,0 +1,95 @@
+name: Build & Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+
+jobs:
+  build:
+    name: Build and test, Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    environment:
+      name: PyPI
+      url: https://pypi.org/p/log-distance-measures
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    strategy:
+      matrix:
+        python-version: [ '3.9' ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install poetry
+        shell: bash
+        run: pip install poetry
+
+      - name: Install project
+        run: |
+          poetry install
+
+      - name: Test
+        run: |
+          poetry run pytest
+
+      - name: Get version
+        id: get_version
+        run: |
+          echo "version=$(poetry version --short)" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: |
+          poetry build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: openxes_cli_py-py${{ matrix.python-version }}-${{ steps.get_version.outputs.version }}
+          path: dist
+
+      - name: Generate changelog
+        run: |
+          echo "# Changelog" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "\`\`\`" >> CHANGELOG.md
+          git log --pretty=format:"%h - %s (%an)" $(git describe --tags --abbrev=0)..HEAD >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "\`\`\`" >> CHANGELOG.md
+        if: github.ref == 'refs/heads/main'
+
+      - name: Assign repository tag
+        run: |
+          git tag ${{ steps.get_version.outputs.version }}
+          git push --tags
+        if: github.ref == 'refs/heads/main'
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*
+          tag_name: ${{ steps.get_version.outputs.version }}
+          body_path: CHANGELOG.md
+        if: github.ref == 'refs/heads/main'
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
