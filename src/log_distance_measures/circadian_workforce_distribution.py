@@ -35,14 +35,21 @@ def circadian_workforce_distribution_distance(
     # Compute the distance between the instant in the event logs for each weekday
     distances = []
     for week_day in range(7):  # All weekdays
-        original_window = original_discrete_events[original_discrete_events['weekday'] == week_day]['hour']
-        simulated_window = simulated_discrete_events[simulated_discrete_events['weekday'] == week_day]['hour']
+        original_window = original_discrete_events[original_discrete_events['weekday'] == week_day]
+        simulated_window = simulated_discrete_events[simulated_discrete_events['weekday'] == week_day]
         if len(original_window) > 0 and len(simulated_window) > 0:
+            # Compute 2-D dict with each bin (hour) and its number of observations
+            original_2d = original_window.drop('weekday', axis=1).set_index('hour')['workforce'].to_dict()
+            simulated_2d = simulated_window.drop('weekday', axis=1).set_index('hour')['workforce'].to_dict()
             # Both have observations in this weekday
             if metric == DistanceMetric.EMD:
-                distances += [earth_movers_distance(original_window, simulated_window) / len(original_window)]
+                distances += [earth_movers_distance(original_2d, simulated_2d) / sum(original_window['workforce'])]
             else:
-                distances += [wasserstein_distance(original_window, simulated_window)]
+                # Transform to 1D array
+                original_1d = [element for key in original_2d for element in [key] * int(original_2d[key] * 100)]
+                simulated_1d = [element for key in simulated_2d for element in [key] * int(simulated_2d[key] * 100)]
+                # Measure 1-WD
+                distances += [wasserstein_distance(original_1d, simulated_1d)]
         elif len(original_window) == 0 and len(simulated_window) == 0:
             # Both have no observations in this weekday
             distances += [0.0]
@@ -62,25 +69,29 @@ def _discretize(
         log_ids: EventLogIDs,
 ) -> pd.DataFrame:
     """
-    Create a pd.Dataframe storing, for each hour (0-23) of each weekday, the number of different resources
+    Create a pd.Dataframe storing, for each hour (0-23) of each weekday, the average number of different resources
     that were actively working (an event associated to them was registered in that hour) through the entire event log.
 
     :param event_log: event log to measure the workforces of.
     :param log_ids: mapping for the column IDs of the event log.
 
-    :return: A pd.Dataframe with the active workforce for each hour for each day of the week.
+    :return: A pd.Dataframe with the average active workforce for each hour for each day of the week.
     """
     # Get the instants to discretize
     start_times = event_log[[log_ids.start_time, log_ids.resource]].rename(columns={log_ids.start_time: 'instant'})
     end_times = event_log[[log_ids.end_time, log_ids.resource]].rename(columns={log_ids.end_time: 'instant'})
-    to_discretize = pd.concat([start_times, end_times]).reset_index(drop=True)
-    # Compute their weekday
-    to_discretize['weekday'] = to_discretize['instant'].apply(lambda instant: instant.day_of_week)
-    to_discretize['hour'] = to_discretize['instant'].apply(lambda instant: instant.hour)
-    to_discretize['day-hour'] = to_discretize['instant'].apply(lambda instant: instant.strftime(format="%Y-%m-%d %H"))
-    # Keep unique resources
-    to_discretize.drop_duplicates(subset=['day-hour', log_ids.resource], inplace=True)
-    to_discretize.drop(['instant', 'day-hour', log_ids.resource], axis=1, inplace=True)
-    # Compute number of unique resources per weekday & hour
-    # workforce = to_discretize.groupby(['weekday', 'hour']).size().reset_index().rename(columns={0: 'workforce'})
-    return to_discretize
+    discretized = pd.concat([start_times, end_times]).reset_index(drop=True)
+    # Add their weekday, hour and combination day-hour
+    discretized['weekday'] = discretized['instant'].apply(lambda instant: instant.day_of_week)
+    discretized['hour'] = discretized['instant'].apply(lambda instant: instant.hour)
+    discretized['day-hour'] = discretized['instant'].apply(lambda instant: instant.strftime(format="%Y-%m-%d %H"))
+    # Compute observed number of Mondays, Tuesdays...
+    discretized['day'] = discretized['instant'].apply(lambda instant: instant.strftime(format="%Y-%m-%d"))
+    days = discretized[['day', 'weekday']].drop_duplicates().groupby('weekday').size().to_dict()
+    # Keep unique resources per day-hour
+    discretized.drop_duplicates(subset=['day-hour', log_ids.resource], inplace=True)
+    # Aggregate number of resources per day of the week and hour, and compute avg
+    discretized = discretized.groupby(['weekday', 'hour']).size().reset_index().rename(columns={0: 'workforce'})
+    discretized['workforce'] = discretized.apply(lambda row: row['workforce'] / days[row['weekday']], axis=1)
+    # Return dataframe with weekday, hour, and average resources
+    return discretized
