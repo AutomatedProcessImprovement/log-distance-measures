@@ -261,7 +261,7 @@ event logs are.
 import pandas as pd
 
 from log_distance_measures.config import DEFAULT_CSV_IDS
-from log_distance_measures.active_cases_over_time import work_in_progress_distance
+from log_distance_measures.work_in_progress import work_in_progress_distance
 
 # Call passing the event logs, its column ID mappings, timestamp type, and discretize function
 work_in_progress_distance(
