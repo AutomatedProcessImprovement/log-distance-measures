@@ -45,7 +45,7 @@ def relative_event_distribution_distance(
         print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
               "long samples may cause a higher reduction of the error.")
         max_value = max(max(relative_1), max(relative_2))
-        distance = distance / max_value if max_value > 0 else 0
+        distance = distance / max_value if max_value > 0 else distance
     return distance
 
 

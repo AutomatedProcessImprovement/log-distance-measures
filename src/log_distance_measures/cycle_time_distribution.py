@@ -60,6 +60,6 @@ def cycle_time_distribution_distance(
         print("WARNING! The normalization of a Wasserstein Distance is sensitive to the range of the two samples, "
               "long samples may cause a higher reduction of the error.")
         max_value = max(max(original_discrete_ct), max(simulated_discrete_ct))
-        distance = distance / max_value if max_value > 0 else 0
+        distance = distance / max_value if max_value > 0 else distance
     # Return metric
     return distance
