@@ -43,7 +43,6 @@ class DistanceMetric(enum.Enum):
 # - EARTH MOVER'S DISTANCE - #
 ##############################
 
-
 def earth_movers_distance(obs_1: Union[list, dict], obs_2: Union[list, dict], extra_mass: int = 1):
     """
     Compute the Earth Mover's Distance (EMD) between two histograms given the 1D array of observations. The EMD corresponds to the amount of
@@ -129,7 +128,7 @@ def absolute_event_distribution_distance(
         event_log_1: pd.DataFrame,
         event_log_2: pd.DataFrame,
         metric: DistanceMetric = DistanceMetric.EMD
-) -> float | Tuple[float, float]:
+) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs. To get this distribution, the timestamps are
     discretized to bins of size given by [discretize_instant] (default by hour).
@@ -192,7 +191,7 @@ def circadian_event_distribution_distance(
         event_log_1: pd.DataFrame,
         event_log_2: pd.DataFrame,
         metric: DistanceMetric = DistanceMetric.EMD
-) -> float | Tuple[float, float]:
+) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs, windowed by weekday (e.g. the instants
     happening on all Mondays are compared together), and discretized to their hour.
@@ -263,7 +262,7 @@ def cycle_time_distribution_distance(
         event_log_2: pd.DataFrame,
         bin_size: datetime.timedelta,
         metric: DistanceMetric = DistanceMetric.EMD
-) -> float | Tuple[float, float]:
+) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of cycle times of two event logs. To get this distribution, the cycle times are
     discretized to bins of size [bin_size].
@@ -305,7 +304,7 @@ def case_arrival_distribution_distance(
         event_log_1: pd.DataFrame,
         event_log_2: pd.DataFrame,
         metric: DistanceMetric = DistanceMetric.EMD
-) -> float | Tuple[float, float]:
+) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of case arrival of two event logs. To get this distribution, the timestamps are
     discretized to bins of size given by [discretize_instance] (default by hour).
@@ -363,7 +362,7 @@ def relative_event_distribution_distance(
         event_log_1: pd.DataFrame,
         event_log_2: pd.DataFrame,
         metric: DistanceMetric = DistanceMetric.EMD
-) -> float | Tuple[float, float]:
+) -> float:
     """
     EMD (or Wasserstein Distance) between the distribution of timestamps of two event logs relative to the start of their trace. To get this
     distribution, the timestamps are first relativized w.r.t. the start of their case (e.g. the first timestamps of a trace would be
@@ -414,6 +413,92 @@ def _relativize_and_discretize(
                            ]
     # Return discretized timestamps
     return discretized_instants
+
+
+###########################
+# - CIRCADIAN WORKFORCE - #
+###########################
+
+def circadian_workforce_distribution_distance(
+        event_log_1: pd.DataFrame,
+        event_log_2: pd.DataFrame,
+        metric: DistanceMetric = DistanceMetric.WASSERSTEIN,
+) -> float:
+    """
+    EMD (or Wasserstein Distance) between the distribution of the workforce by hour (number of observed active workers
+    in each hour) in two event logs, windowed by weekday (e.g., the workforces measured for each Monday in a log are
+    aggregated as an average into one single Monday).
+
+    :param event_log_1: first event log.
+    :param event_log_2: second event log.
+    :param metric: distance metric to use in the histogram comparison.
+
+    :return: the EMD between the timestamp distribution of the two event logs windowed by weekday.
+    """
+    # Get discretized start and/or end timestamps
+    discrete_events_1 = _discretize_for_circadian_workforce(event_log_1, log_1_ids)
+    discrete_events_2 = _discretize_for_circadian_workforce(event_log_2, log_2_ids)
+    # Compute the distance between the instant in the event logs for each weekday
+    distances = []
+    for week_day in range(7):  # All weekdays
+        window_1 = discrete_events_1[discrete_events_1['weekday'] == week_day]
+        window_2 = discrete_events_2[discrete_events_2['weekday'] == week_day]
+        if len(window_1) > 0 and len(window_2) > 0:
+            # Compute 2-D dict with each bin (hour) and its number of observations
+            workforces_1_2d = window_1.drop('weekday', axis=1).set_index('hour')['workforce'].to_dict()
+            workforces_2_2d = window_2.drop('weekday', axis=1).set_index('hour')['workforce'].to_dict()
+            # Both have observations in this weekday
+            if metric == DistanceMetric.EMD:
+                distances += [earth_movers_distance(workforces_1_2d, workforces_2_2d) / sum(window_1['workforce'])]
+            else:
+                # Transform to 1D array
+                workforces_1_1d = [element for key in workforces_1_2d for element in [key] * int(workforces_1_2d[key] * 100)]
+                workforces_2_1d = [element for key in workforces_2_2d for element in [key] * int(workforces_2_2d[key] * 100)]
+                # Measure 1-WD
+                distances += [wasserstein_distance(workforces_1_1d, workforces_2_1d)]
+        elif len(window_1) == 0 and len(window_2) == 0:
+            # Both have no observations in this weekday
+            distances += [0.0]
+        else:
+            # Only one has observations in this weekday, penalize with max distance value
+            distances += [23.0]  # 23 is the maximum value for two histograms with values between 0 and 23.
+    # Compute distance metric
+    distance = mean(distances)
+    # Return metric
+    return distance
+
+
+def _discretize_for_circadian_workforce(
+        event_log: pd.DataFrame,
+        log_ids: EventLogIDs,
+) -> pd.DataFrame:
+    """
+    Create a pd.Dataframe storing, for each hour (0-23) of each weekday, the average number of different resources
+    that were actively working (an event associated to them was registered in that hour) through the entire event log.
+
+    :param event_log: event log to measure the workforces of.
+    :param log_ids: mapping for the column IDs of the event log.
+
+    :return: A pd.Dataframe with the average active workforce for each hour for each day of the week.
+    """
+    # Get the instants to discretize
+    start_times = event_log[[log_ids.start_time, log_ids.resource]].rename(columns={log_ids.start_time: 'instant'})
+    end_times = event_log[[log_ids.end_time, log_ids.resource]].rename(columns={log_ids.end_time: 'instant'})
+    discretized = pd.concat([start_times, end_times]).reset_index(drop=True)
+    # Add their weekday, hour and combination day-hour
+    discretized['weekday'] = discretized['instant'].apply(lambda instant: instant.day_of_week)
+    discretized['hour'] = discretized['instant'].apply(lambda instant: instant.hour)
+    discretized['day-hour'] = discretized['instant'].apply(lambda instant: instant.strftime(format="%Y-%m-%d %H"))
+    # Compute observed number of Mondays, Tuesdays...
+    discretized['day'] = discretized['instant'].apply(lambda instant: instant.strftime(format="%Y-%m-%d"))
+    days = discretized[['day', 'weekday']].drop_duplicates().groupby('weekday').size().to_dict()
+    # Keep unique resources per day-hour
+    discretized.drop_duplicates(subset=['day-hour', log_ids.resource], inplace=True)
+    # Aggregate number of resources per day of the week and hour, and compute avg
+    discretized = discretized.groupby(['weekday', 'hour']).size().reset_index().rename(columns={0: 'workforce'})
+    discretized['workforce'] = discretized.apply(lambda row: row['workforce'] / days[row['weekday']], axis=1)
+    # Return dataframe with weekday, hour, and average resources
+    return discretized
 
 
 #######################
@@ -656,6 +741,7 @@ def main(args):
         outfile.write("absolute_emd,absolute_emd_runtime,absolute_wass,absolute_wass_runtime,")
         outfile.write("case_arrival_emd,case_arrival_emd_runtime,case_arrival_wass,case_arrival_wass_runtime,")
         outfile.write("circadian_emd,circadian_emd_runtime,circadian_wass,circadian_wass_runtime,")
+        outfile.write("workforce_emd,workforce_emd_runtime,workforce_wass,workforce_wass_runtime,")
         outfile.write("relative_emd,relative_emd_runtime,relative_wass,relative_wass_runtime,")
         outfile.write("cycle_time_wass,cycle_time_wass_runtime\n")
     for simulated_path in simulated_paths:
@@ -706,6 +792,15 @@ def main(args):
         circadian_events_wass = circadian_event_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
         circadian_events_wass_runtime = time.time() - start
         print("Circadian Event Distribution Wasserstein: {} s".format(circadian_events_wass_runtime))
+        # CIRCADIAN WORKFORCE
+        start = time.time()
+        circadian_workforce_emd = circadian_workforce_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
+        circadian_workforce_emd_runtime = time.time() - start
+        print("Circadian Workforce Distribution EMD: {} s".format(circadian_workforce_emd_runtime))
+        start = time.time()
+        circadian_workforce_wass = circadian_workforce_distribution_distance(original_log, simulated_log, DistanceMetric.WASSERSTEIN)
+        circadian_workforce_wass_runtime = time.time() - start
+        print("Circadian Workforce Distribution Wasserstein: {} s".format(circadian_workforce_wass_runtime))
         # RELATIVE
         start = time.time()
         relative_events_emd = relative_event_distribution_distance(original_log, simulated_log, DistanceMetric.EMD)
@@ -753,6 +848,12 @@ def main(args):
                 circadian_events_emd_runtime,
                 circadian_events_wass,
                 circadian_events_wass_runtime
+            ))
+            outfile.write("{},{},{},{},".format(
+                circadian_workforce_emd,
+                circadian_workforce_emd_runtime,
+                circadian_workforce_wass,
+                circadian_workforce_wass_runtime
             ))
             outfile.write("{},{},{},{},".format(
                 relative_events_emd,
