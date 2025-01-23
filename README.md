@@ -10,8 +10,8 @@ pip install log-distance-measures
 
 ## Description
 
-Python package with the implementation of different distance measures between two event logs, from the control-flow, temporal, and queuing
-perspectives:
+Python package with the implementation of different distance measures between two event logs, from the control-flow,
+temporal, and workforce perspectives:
 
 - Control-flow
     - N-Gram Distribution Distance
@@ -22,6 +22,8 @@ perspectives:
     - Circadian Event Distribution Distance
     - Relative Event Distribution Distance
     - Cycle Time Distribution Distance
+- Workforce
+    - Circadian Workforce Distribution
 
 #### Example of input initialization
 
@@ -47,15 +49,16 @@ event_log[event_log_ids.end_time] = pd.to_datetime(event_log[event_log_ids.end_t
 
 ## Control-flow Log Distance (CFLD)
 
-Distance measure between two event logs with the same number of traces (_L1_ and _L2_) comparing the control-flow dimension (see "Camargo
-M, Dumas M, González-Rojas O. 2021. Discovering generative models from event logs: data-driven simulation vs deep learning. PeerJ Computer
-Science 7:e577 https://doi.org/10.7717/peerj-cs.577" for a detailed description of a similarity version of this measure).
+Distance measure between two event logs with the same number of traces (_L1_ and _L2_) comparing the control-flow
+dimension (see "Camargo M, Dumas M, González-Rojas O. 2021. Discovering generative models from event logs: data-driven
+simulation vs deep learning. PeerJ Computer Science 7:e577 https://doi.org/10.7717/peerj-cs.577" for a detailed
+description of a similarity version of this measure).
 
 1. Transform each process trace of _L1_ and _L2_ to their corresponding activity sequence.
-2. Compute the Damerau-Levenshtein distance between each trace _i_ from _L1_ and each trace _j_ of _L2_, and normalize it by dividing by the
-   length of the longest trace.
-3. Compute the matching between the traces of both logs (such that each _i_ is matched to a different _j_, and vice versa) minimizing the
-   sum of distances with linear programming.
+2. Compute the Damerau-Levenshtein distance between each trace _i_ from _L1_ and each trace _j_ of _L2_, and normalize
+   it by dividing by the length of the longest trace.
+3. Compute the matching between the traces of both logs (such that each _i_ is matched to a different _j_, and vice
+   versa) minimizing the sum of distances with linear programming.
 4. Compute the CFLD as the average of the normalized distance values.
 
 ### Example of use
@@ -75,14 +78,15 @@ distance = control_flow_log_distance(
 
 ## N-Gram Distribution Distance
 
-Distance measure between two event logs computing the difference in the frequencies of the n-grams observed in the event logs (
-being the n-grams of an event log all the groups of `n` consecutive elements observed in it).
+Distance measure between two event logs computing the difference in the frequencies of the n-grams observed in the event
+logs (being the n-grams of an event log all the groups of `n` consecutive elements observed in it).
 
-1. Given a size `n`, get all sequences of `n` activities (n-gram) observed in each event log (adding artificial activities to the start and
-   end of each trace to consider these as well, e.g., `0 - 0 - A` for a trace starting with `A` and an `n = 3`).
+1. Given a size `n`, get all sequences of `n` activities (n-gram) observed in each event log (adding artificial
+   activities to the start and end of each trace to consider these as well, e.g., `0 - 0 - A` for a trace starting
+   with `A` and an `n = 3`).
 2. Compute the number of times that each n-gram is observed in each event log (its frequency).
-3. Compute the sum of absolute differences between the frequencies of all computed n-grams (e.g. the frequency of `A - B - C` in the first
-   event log w.r.t. its frequency in the second event log).
+3. Compute the sum of absolute differences between the frequencies of all computed n-grams (e.g. the frequency
+   of `A - B - C` in the first event log w.r.t. its frequency in the second event log).
 
 ### Example of use
 
@@ -102,12 +106,12 @@ distance = n_gram_distribution_distance(
 
 ## Absolute Event Distribution Distance
 
-Distance measure computing how different the histograms of the timestamps of two event logs are, discretizing the timestamps by absolute
-hour.
+Distance measure computing how different the histograms of the timestamps of two event logs are, discretizing the
+timestamps by absolute hour.
 
 1. Take all the start timestamps, the end timestamps, or both.
-2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` go to the same
-   bin).
+2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59`
+   go to the same bin).
 3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
 ### Example of use
@@ -120,16 +124,16 @@ from log_distance_measures.config import AbsoluteTimestampType, DEFAULT_CSV_IDS,
 distance = absolute_event_distribution_distance(
     original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    discretize_type=AbsoluteTimestampType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
-    discretize_event=discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
+    discretize_type=AbsoluteTimestampType.BOTH,  # Which timestamps to consider (start times and/or end times)
+    discretize_event=discretize_to_hour  # Function to discretize the time of each timestamp (default by hour)
 )
 ```
 
-This EMD measure can be also used to compare the distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end
-timestamps (with `AbsoluteHourEmdType.END`), instead of both of them.
+This EMD measure can be also used to compare the distribution of the start timestamps (
+with `AbsoluteHourEmdType.START`), or the end timestamps (with `AbsoluteHourEmdType.END`), instead of both of them.
 
-Furthermore, the binning is performed to hour by default, but it can be customized passing another function discretize the total amount of
-seconds to its bin.
+Furthermore, the binning is performed to hour by default, but it can be customized passing another function discretize
+the total amount of seconds to its bin.
 
 ```python
 import math
@@ -160,8 +164,8 @@ distance = absolute_event_distribution_distance(
 Distance measure computing how different the discretized histograms of the arrival events of two event logs are.
 
 1. Compute the arrival timestamp for each process case (its first start time).
-2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59` go to the same
-   bin).
+2. Discretize the timestamps by absolute hour (those timestamps between `02/05/2022 10:00:00` and `02/05/2022 10:59:59`
+   go to the same bin).
 3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
 ### Example of use
@@ -181,18 +185,20 @@ distance = case_arrival_distribution_distance(
 
 ## Circadian Event Distribution Distance
 
-Distance measure computing how different the histograms of the timestamps of two event logs are, comparing all the instants recorded in the
-same weekday together, and discretizing them to the hour in the day.
+Distance measure computing how different the histograms of the timestamps of two event logs are, comparing all the
+instants recorded in the same weekday together, and discretizing them to the hour in the day.
 
 1. Take all the start timestamps, the end timestamps, or both.
-2. Group the timestamps by their weekday (e.g. all the timestamps recorded on Monday of one log are going to be compared with the timestamps
-   recorded on Monday of the other event log).
+2. Group the timestamps by their weekday (e.g. all the timestamps recorded on Monday of one log are going to be compared
+   with the timestamps recorded on Monday of the other event log).
 3. Discretize the timestamps to their hour (those timestamps between '10:00:00' and '10:59:59' go to the same bin).
-4. Compare the histograms of the two event logs for each weekday (with the Wasserstein Distance, a.k.a. EMD), and compute the average.
+4. Compare the histograms of the two event logs for each weekday (with the Wasserstein Distance, a.k.a. EMD), and
+   compute the average.
 
-_Extra 1_: If there are no recorded timestamps for one of the weekdays in both logs, no distance is measured for that day.
-_Extra 2_: If there are no recorded timestamps for one of the weekdays in one of the logs, the distance for that day is set to 23 (the
-maximum distance for two histograms with values from 0 to 23)
+_Extra 1_: If there are no recorded timestamps for one of the weekdays in both logs, no distance is measured for that
+day.
+_Extra 2_: If there are no recorded timestamps for one of the weekdays in one of the logs, the distance for that day is
+set to 23 (the maximum distance for two histograms with values from 0 to 23)
 
 ### Example of use
 
@@ -207,20 +213,20 @@ distance = circadian_event_distribution_distance(
 )
 ```
 
-Similarly than with the Absolute Event Distribution Distance, the Circadian Event Distribution Distance can be also used to compare the
-distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end timestamps (with `AbsoluteHourEmdType.END`), instead of
-both of them.
+Similar to the Absolute Event Distribution Distance, the Circadian Event Distribution Distance can be also used to
+compare the distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end timestamps (
+with `AbsoluteHourEmdType.END`), instead of both of them.
 
 &nbsp;
 
 ## Relative Event Distribution Distance
 
-Distance measure computing how different the histograms of the relative (w.r.t. the start of each case) timestamps of two event logs are,
-discretizing the timestamps by absolute hour.
+Distance measure computing how different the histograms of the relative (w.r.t. the start of each case) timestamps of
+two event logs are, discretizing the timestamps by absolute hour.
 
 1. Take all the start timestamps, the end timestamps, or both.
-2. Make them relative w.r.t. the start of their process case (e.g. the first timestamp in a case is 0, the second one is the time itnerval
-   from the first one).
+2. Make them relative w.r.t. the start of their process case (e.g. the first timestamp in a case is 0, the second one is
+   the time interval from the first one).
 3. Discretize the durations by hour (e.g. those durations between `0` and `3599` go to the same bin).
 4. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
@@ -234,42 +240,14 @@ from log_distance_measures.relative_event_distribution import relative_event_dis
 distance = relative_event_distribution_distance(
     original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    discretize_type=AbsoluteTimestampType.BOTH,  # Type of timestamp distribution (consider start times and/or end times)
-    discretize_event=discretize_to_hour  # Function to discretize the absolute seconds of each timestamp (default by hour)
+    discretize_type=AbsoluteTimestampType.BOTH,  # Which timestamps to consider (start times and/or end times)
+    discretize_event=discretize_to_hour  # Function to discretize the time of each timestamp (default by hour)
 )
 ```
 
-Similarly than with the Absolute Event Distribution Distance, the Relative Event Distribution Distance can be also used to compare the
-distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end timestamps (with `AbsoluteHourEmdType.END`), instead of
-both of them.
-
-&nbsp;
-
-## Work in Progress Distance
-
-Distance measure computing how different the histograms of the number of active cases (computing the average active cases per window) of two
-event logs are.
-
-1. Build a timeline with a bin for each hour since the beginning to the end of both logs.
-2. Compute, for each bin, the average number of active cases (e.g. 4 and a half active cases in the window from `01/01/2023 10:00:00` to
-   `01/01/2023 10:59:59`).
-3. Compare the histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
-
-### Example of use
-
-```python
-import pandas as pd
-
-from log_distance_measures.config import DEFAULT_CSV_IDS
-from log_distance_measures.work_in_progress import work_in_progress_distance
-
-# Call passing the event logs, its column ID mappings, timestamp type, and discretize function
-work_in_progress_distance(
-    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
-    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
-    window_size=pd.Timedelta(hours=1)  # Bins of 1 hour
-)
-```
+Similar to the Absolute Event Distribution Distance, the Relative Event Distribution Distance can be also used to
+compare the distribution of the start timestamps (with `AbsoluteHourEmdType.START`), or the end timestamps (
+with `AbsoluteHourEmdType.END`), instead of both of them.
 
 &nbsp;
 
@@ -293,5 +271,35 @@ distance = cycle_time_distribution_distance(
     original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
     simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
     bin_size=pd.Timedelta(hours=1)  # Bins of 1 hour
+)
+```
+
+&nbsp;
+
+## Circadian Workforce Distribution Distance
+
+Distance measure computing how different the histograms of the number of active resources of two event logs are,
+comparing the number of active resources of each hour of each weekday.
+
+1. For each hour in the timeline of the log, count the number of unique resources that recorded an event within it.
+2. Group the number of active resources per hour by their weekday.
+3. For each hour of each weekday, compute the average of the number of active resources.
+4. Compare the histograms of the two event logs for each weekday (with the Wasserstein Distance, a.k.a. EMD), and
+   compute the average.
+
+_Extra 1_: If there are no recorded active resources for one of the weekdays in both logs, no distance is measured for
+that day.
+_Extra 2_: If there are no recorded active resources for one of the weekdays in one of the logs, the distance for that
+day is set to 23 (the maximum distance for two histograms with values from 0 to 23)
+
+### Example of use
+
+```python
+from log_distance_measures.circadian_workforce_distribution import circadian_workforce_distribution_distance
+from log_distance_measures.config import DEFAULT_CSV_IDS
+
+distance = circadian_workforce_distribution_distance(
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
 )
 ```
