@@ -1,4 +1,4 @@
-name: Build & Test
+name: Build, Test, Release
 
 on:
   workflow_dispatch:
@@ -19,16 +19,13 @@ jobs:
   build:
     name: Build and test, Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
-    environment:
-      name: PyPI
-      url: https://pypi.org/p/log-distance-measures
     permissions:
       id-token: write
       contents: write
       packages: write
     strategy:
       matrix:
-        python-version: [ '3.9' ]
+        python-version: [ '3.9' , '3.10' , '3.11' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -51,19 +48,52 @@ jobs:
         run: |
           poetry run pytest
 
-      - name: Get version
-        id: get_version
+  release:
+    name: Release, Python ${{ matrix.python-version }}
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        python-version: [ '3.11' ]
+    environment:
+      name: PyPI
+      url: https://pypi.org/p/log-distance-measures
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install poetry
+        shell: bash
+        run: pip install poetry
+
+      - name: Install project
         run: |
-          echo "version=$(poetry version --short)" >> "$GITHUB_OUTPUT"
+          poetry install
 
       - name: Build
         run: |
           poetry build
 
+      - name: Get version
+        id: get_version
+        run: |
+          echo "version=$(poetry version --short)" >> "$GITHUB_OUTPUT"
+
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: openxes_cli_py-py${{ matrix.python-version }}-${{ steps.get_version.outputs.version }}
+          name: log-distance-measures-${{ steps.get_version.outputs.version }}-py${{ matrix.python-version }}
           path: dist
 
       - name: Generate changelog
@@ -74,13 +104,11 @@ jobs:
           git log --pretty=format:"%h - %s (%an)" $(git describe --tags --abbrev=0)..HEAD >> CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "\`\`\`" >> CHANGELOG.md
-        if: github.ref == 'refs/heads/main'
 
       - name: Assign repository tag
         run: |
           git tag ${{ steps.get_version.outputs.version }}
           git push --tags
-        if: github.ref == 'refs/heads/main'
 
       - name: Create release
         uses: softprops/action-gh-release@v1
@@ -89,7 +117,6 @@ jobs:
             dist/*
           tag_name: ${{ steps.get_version.outputs.version }}
           body_path: CHANGELOG.md
-        if: github.ref == 'refs/heads/main'
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
