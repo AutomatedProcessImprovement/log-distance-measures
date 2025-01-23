@@ -1,14 +1,7 @@
 # Event Log Distance Measures
 
-## Installation
-
-Package available in PyPI: https://pypi.org/project/log-distance-measures/. Install it with:
-
-```bash
-pip install log-distance-measures
-```
-
-## Description
+![build](https://github.com/AutomatedProcessImprovement/log-distance-measures/actions/workflows/build.yaml/badge.svg)
+![version](https://img.shields.io/github/v/tag/AutomatedProcessImprovement/log-distance-measures)
 
 Python package with the implementation of different distance measures between two event logs, from the control-flow,
 temporal, and workforce perspectives:
@@ -24,6 +17,14 @@ temporal, and workforce perspectives:
     - Cycle Time Distribution Distance
 - Workforce
     - Circadian Workforce Distribution
+
+## Installation
+
+Package available in PyPI: https://pypi.org/project/log-distance-measures/. Install it with:
+
+```bash
+pip install log-distance-measures
+```
 
 #### Example of input initialization
 
