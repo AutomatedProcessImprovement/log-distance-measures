@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "log-distance-measures"
-version = "2.0.1"
+version = "2.0.2"
 description = "Python package with the implementation of different distance measures between two event logs, from the control-flow, temporal, and queuing perspectives."
 authors = ["David Chapela de la Campa <david.chapela.delacampa@gmail.com>"]
 readme = "README.md"

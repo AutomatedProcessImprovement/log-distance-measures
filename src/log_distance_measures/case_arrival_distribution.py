@@ -39,7 +39,7 @@ def case_arrival_distribution_distance(
     first_arrival = min(
         original_arrivals[original_ids.start_time].min(),
         simulated_arrivals[simulated_ids.start_time].min()
-    ).floor(freq='H')
+    ).floor(freq='h')
     # Discretize each event to its corresponding "bin"
     original_discrete_arrivals = [
         discretize_event(difference.total_seconds())

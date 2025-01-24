@@ -39,11 +39,11 @@ def work_in_progress_distance(
     start = min(
         original_log[original_ids.start_time].min(),
         simulated_log[simulated_ids.start_time].min()
-    ).floor(freq='24H')
+    ).floor(freq='24h')
     end = max(
         original_log[original_ids.end_time].max(),
         simulated_log[simulated_ids.end_time].max()
-    ).ceil(freq='24H')
+    ).ceil(freq='24h')
     # Compute the active area of each bin
     original_wip = _compute_work_in_progress(original_log, original_ids, start, end, window_size)
     simulated_wip = _compute_work_in_progress(simulated_log, simulated_ids, start, end, window_size)

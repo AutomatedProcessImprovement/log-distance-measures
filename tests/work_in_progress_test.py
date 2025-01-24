@@ -51,8 +51,8 @@ def test_work_in_progress_distance_different_logs():
 
 def test__compute_work_in_progress():
     event_log = _read_event_log("./tests/assets/test_event_log_4.csv")
-    start = event_log[DEFAULT_CSV_IDS.start_time].min().floor(freq="H")
-    end = event_log[DEFAULT_CSV_IDS.end_time].max().ceil(freq="H")
+    start = event_log[DEFAULT_CSV_IDS.start_time].min().floor(freq="h")
+    end = event_log[DEFAULT_CSV_IDS.end_time].max().ceil(freq="h")
     assert _compute_work_in_progress(event_log, DEFAULT_CSV_IDS, start, end, pd.Timedelta(hours=1)) == {
         0: 0.8333333333333334,
         1: 3.816666666666667,
@@ -61,8 +61,8 @@ def test__compute_work_in_progress():
         4: 0.7166666666666667
     }
     event_log = _read_event_log("./tests/assets/test_event_log_8.csv")
-    start = event_log[DEFAULT_CSV_IDS.start_time].min().floor(freq="H")
-    end = event_log[DEFAULT_CSV_IDS.end_time].max().ceil(freq="H")
+    start = event_log[DEFAULT_CSV_IDS.start_time].min().floor(freq="h")
+    end = event_log[DEFAULT_CSV_IDS.end_time].max().ceil(freq="h")
     assert _compute_work_in_progress(event_log, DEFAULT_CSV_IDS, start, end, pd.Timedelta(hours=1)) == {
         0: 0.5,
         1: 2.5,

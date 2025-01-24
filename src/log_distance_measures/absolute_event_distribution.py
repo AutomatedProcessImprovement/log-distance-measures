@@ -80,13 +80,13 @@ def _discretize(
         interval_start = min(
             original_log[original_ids.end_time].min(),
             simulated_log[simulated_ids.end_time].min()
-        ).floor(freq='H')
+        ).floor(freq='h')
     else:
         # Consider only 'start' or both
         interval_start = min(
             original_log[original_ids.start_time].min(),
             simulated_log[simulated_ids.start_time].min()
-        ).floor(freq='H')
+        ).floor(freq='h')
     # Discretize each event to its corresponding "bin"
     orig_discretized_events, sim_discretized_events = [], []
     if discretize_type != AbsoluteTimestampType.END:
