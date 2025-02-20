@@ -277,6 +277,36 @@ distance = cycle_time_distribution_distance(
 
 &nbsp;
 
+## Remaining Time Distribution Distance
+
+In situations where the start of the log was sliced at a specific timestamp (_reference_point_), some cases may be 
+partially included as they were ongoing at time _reference_point_. We consider their duration from _reference_point_ 
+until their end as their "_remaining cycle time_". This distance measure computes how different the remaining cycle 
+times of the cases (ongoing at a point _reference_point_) of two event logs are (as discretized histograms).
+
+1. Compute the remaining cycle time of each ongoing case as the difference between its last activity instance end (i.e.,
+   case end) and the reference point.
+2. Group the remaining times in bins by a given bin size (time gap).
+3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+
+### Example of use
+
+```python
+import pandas as pd
+
+from log_distance_measures.config import DEFAULT_CSV_IDS
+from log_distance_measures.remaining_time_distribution import remaining_time_distribution_distance
+
+distance = remaining_time_distribution_distance(
+    original_log, DEFAULT_CSV_IDS,  # First event log and its column id mappings
+    simulated_log, DEFAULT_CSV_IDS,  # Second event log and its column id mappings
+    reference_point=pd.Timestamp("2025-02-20T10:00:00.000+02:00"),  # Timestamp considered as reference point
+    bin_size=pd.Timedelta(hours=1)  # Bins of 1 hour
+)
+```
+
+&nbsp;
+
 ## Circadian Workforce Distribution Distance
 
 Distance measure computing how different the histograms of the number of active resources of two event logs are,
