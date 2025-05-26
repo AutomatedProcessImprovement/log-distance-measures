@@ -110,3 +110,40 @@ def test_remaining_time_distribution_shifted_logs():
         event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS,
         reference_point=reference_point, bin_size=datetime.timedelta(hours=6)
     ) == 0.0
+
+
+def test_remaining_time_distribution_different_size_logs():
+    # Read event log
+    reference_point = pd.Timestamp("2006-11-07 12:40:00+02:00")
+    event_log_1 = _read_event_log("./tests/assets/test_event_log_4.csv")
+    event_log_1 = event_log_1[event_log_1[DEFAULT_CSV_IDS.end_time] > reference_point]
+    event_log_1.loc[
+        event_log_1[DEFAULT_CSV_IDS.start_time] < reference_point,
+        DEFAULT_CSV_IDS.start_time
+    ] = reference_point
+    # Make a copy removing two cases and updating case ID, activity name, and resources, keeping timestamps
+    event_log_2 = event_log_1.copy()
+    event_log_2 = event_log_2[~event_log_2[DEFAULT_CSV_IDS.case].isin(["trace-08", "trace-09"])]
+    event_log_2[DEFAULT_CSV_IDS.case] = event_log_2[DEFAULT_CSV_IDS.case].apply(lambda case_id: case_id + "_2")
+    event_log_2[DEFAULT_CSV_IDS.resource] = event_log_2[DEFAULT_CSV_IDS.resource].apply(lambda case_id: case_id + "_2")
+    event_log_2[DEFAULT_CSV_IDS.activity] = event_log_2[DEFAULT_CSV_IDS.activity].apply(lambda case_id: case_id + "_2")
+    # Remove three cases from copied event log
+    assert event_log_1[DEFAULT_CSV_IDS.case].nunique() == event_log_2[DEFAULT_CSV_IDS.case].nunique() + 2
+    # Normalized distance should be >0 as one distribution has fewer observations
+    assert remaining_time_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS,
+        reference_point=reference_point, bin_size=datetime.timedelta(minutes=10), normalize=True
+    ) > 0.0
+    assert remaining_time_distribution_distance(
+        event_log_2, DEFAULT_CSV_IDS, event_log_1, DEFAULT_CSV_IDS,
+        reference_point=reference_point, bin_size=datetime.timedelta(minutes=10), normalize=True
+    ) > 0.0
+    # Non normalized distance should be >0 as one distribution has fewer observations
+    assert remaining_time_distribution_distance(
+        event_log_1, DEFAULT_CSV_IDS, event_log_2, DEFAULT_CSV_IDS,
+        reference_point=reference_point, bin_size=datetime.timedelta(minutes=10)
+    ) > 0.0
+    assert remaining_time_distribution_distance(
+        event_log_2, DEFAULT_CSV_IDS, event_log_1, DEFAULT_CSV_IDS,
+        reference_point=reference_point, bin_size=datetime.timedelta(minutes=10)
+    ) > 0.0

@@ -15,6 +15,7 @@ temporal, and workforce perspectives:
     - Circadian Event Distribution Distance
     - Relative Event Distribution Distance
     - Cycle Time Distribution Distance
+    - Remaining Time Distribution Distance
 - Workforce
     - Circadian Workforce Distribution
 
@@ -287,7 +288,8 @@ times of the cases (ongoing at a point _reference_point_) of two event logs are 
 1. Compute the remaining cycle time of each ongoing case as the difference between its last activity instance end (i.e.,
    case end) and the reference point.
 2. Group the remaining times in bins by a given bin size (time gap).
-3. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
+3. If the number of observations is different, fill the smaller one with 0 until both cover the same number of cases.
+4. Compare the discretized histograms of the two event logs with the Wasserstein Distance (a.k.a. EMD).
 
 ### Example of use
 

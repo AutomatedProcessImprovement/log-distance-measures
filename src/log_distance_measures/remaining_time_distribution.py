@@ -43,15 +43,23 @@ def remaining_time_distribution_distance(
     for case, events in simulated_log.groupby(simulated_ids.case):
         simulated_remaining_times += [events[simulated_ids.end_time].max() - reference_point]
     # Discretize each event to its corresponding "bin"
-    min_remaining_duration = min(original_remaining_times + simulated_remaining_times)
     original_discrete_rt = [
-        math.floor((trace_remaining_duration - min_remaining_duration) / bin_size)
+        math.floor(trace_remaining_duration / bin_size)
         for trace_remaining_duration in original_remaining_times
     ]
     simulated_discrete_rt = [
-        math.floor((trace_remaining_duration - min_remaining_duration) / bin_size)
+        math.floor(trace_remaining_duration / bin_size)
         for trace_remaining_duration in simulated_remaining_times
     ]
+    # Fill to equal sizes if different number of ongoing cases
+    if len(original_discrete_rt) > len(simulated_discrete_rt):
+        # More ongoing cases in the original log, pad simulated log with cases of duration 0
+        difference = len(original_discrete_rt) - len(simulated_discrete_rt)
+        simulated_discrete_rt += [0] * difference
+    elif len(simulated_discrete_rt) > len(original_discrete_rt):
+        # More ongoing cases in the simulated log, pad original log with cases of duration 0
+        difference = len(simulated_discrete_rt) - len(original_discrete_rt)
+        original_discrete_rt += [0] * difference
     # Compute distance metric
     if metric == DistanceMetric.EMD:
         distance = earth_movers_distance(original_discrete_rt, simulated_discrete_rt) / len(original_discrete_rt)
