@@ -6,7 +6,7 @@ authors = ["David Chapela de la Campa <david.chapela.delacampa@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.11,<3.13"
 pandas = "^2.3.3"
 scipy = "^1.17.1"
 jellyfish = "^1.2.1"
